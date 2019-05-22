@@ -1,0 +1,30 @@
+{
+  "name": "video-codecs-node",
+  "version": "1.0.0",
+  "description": "Video codecs for Media and RTMP servers",
+  "main": "index.js",
+  "scripts": {
+    "configure": "node-gyp configure",
+    "swig": "swig -javascript -node -c++ src/video-codecs.i",
+    "build": "node-gyp build --jobs=max",
+    "install": "test -f build/Release/medooze-video-codecs.node || (node-gyp configure && node-gyp rebuild --jobs=max)",
+    "package": "tar cvzf build/medooze-video-codecs.tgz  `([ \"$(uname)\" = 'Darwin' ] && echo \"-s |^|medooze-video-codecs/|\") || echo \" --transform=flags=r;s|^|medooze-video-codecs/|\"` media-server/src/* media-server/include/* media-server/ext/libdatachannels/src/* media-server/ext/crc32c/* lib/* package.json index.js  binding.gyp  README.md src",
+    "dist": "node-gyp configure && node-gyp build --jobs=max && mkdir -p dist && tar cvzf dist/medooze-video-codecs-`node -e 'console.log(require(\"./package.json\").version)'`.tgz `([ \"$(uname)\" = 'Darwin' ] && echo \"-s |^|medooze-video-codecs/|\") || echo \" --transform=flags=r;s|^|medooze-video-codecs/|\"` package.json index.js   README.md lib/* build/Release/medooze-video-codecs.node",
+    "test": "tap tests/*.js --cov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/medooze/video-codecs-node.git"
+  },
+  "author": "Sergio Garcia Murillo @ Medooze",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/medooze/video-codecs-node/issues"
+  },
+  "homepage": "https://github.com/medooze/video-codecs-node#readme",
+  "dependencies": {
+    "lfsr": "0.0.3",
+    "nan": "^2.12.1",
+    "uuid": "^3.3.2"
+  }
+}
