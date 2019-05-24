@@ -123,7 +123,9 @@ private:
 	RTPIncomingMediaStream* incoming = nullptr;	
 };
 
-class VideoEncoderFacade : public VideoEncoderWorker
+class VideoEncoderFacade : 
+	public VideoEncoderWorker,
+	public RTPReceiver
 {
 public:
 	int SetVideoCodec(v8::Handle<v8::Value> name, int width, int height, int fps, int bitrate, int intraPeriod, const Properties *properties)
@@ -132,6 +134,10 @@ public:
 		auto codec = VideoCodec::GetCodecForName(*v8::String::Utf8Value(name.As<v8::String>()));
 		//Set it
 		return codec!=VideoCodec::UNKNOWN ? VideoEncoderWorker::SetVideoCodec(codec, width, height, fps, bitrate, intraPeriod,  properties? *properties : Properties()) : 0;
+	}
+	virtual int SendPLI(DWORD ssrc)
+	{
+		VideoEncoderWorker::SendFPU();
 	}
 };
 
@@ -164,11 +170,13 @@ struct VideoPipe :
 	public VideoInput,
 	public VideoOutput
 {
+	int Init();
+	int End();
 };
 
 struct MediaFrameListenerBridge : 
 	public MediaFrameListener,
-	RTPIncomingMediaStream
+	public RTPIncomingMediaStream
 {
 	MediaFrameListenerBridge(int ssrc);
 };
@@ -180,7 +188,11 @@ struct Properties
 	void SetProperty(const char* key,bool boolval);
 };
 
-struct VideoEncoderFacade
+%nodefaultctor RTPReceiver;
+%nodefaultdtor RTPReceiver;
+struct RTPReceiver {};
+
+struct VideoEncoderFacade : public RTPReceiver
 {
 	VideoEncoderFacade();
 	int Init(VideoInput *input);

@@ -1540,15 +1540,16 @@ fail: ;
 #define SWIGTYPE_p_MediaFrameListenerBridge swig_types[1]
 #define SWIGTYPE_p_Properties swig_types[2]
 #define SWIGTYPE_p_RTPIncomingMediaStream swig_types[3]
-#define SWIGTYPE_p_VideoCodecs swig_types[4]
-#define SWIGTYPE_p_VideoDecoderFacade swig_types[5]
-#define SWIGTYPE_p_VideoEncoderFacade swig_types[6]
-#define SWIGTYPE_p_VideoInput swig_types[7]
-#define SWIGTYPE_p_VideoOutput swig_types[8]
-#define SWIGTYPE_p_VideoPipe swig_types[9]
-#define SWIGTYPE_p_char swig_types[10]
-static swig_type_info *swig_types[12];
-static swig_module_info swig_module = {swig_types, 11, 0, 0, 0, 0};
+#define SWIGTYPE_p_RTPReceiver swig_types[4]
+#define SWIGTYPE_p_VideoCodecs swig_types[5]
+#define SWIGTYPE_p_VideoDecoderFacade swig_types[6]
+#define SWIGTYPE_p_VideoEncoderFacade swig_types[7]
+#define SWIGTYPE_p_VideoInput swig_types[8]
+#define SWIGTYPE_p_VideoOutput swig_types[9]
+#define SWIGTYPE_p_VideoPipe swig_types[10]
+#define SWIGTYPE_p_char swig_types[11]
+static swig_type_info *swig_types[13];
+static swig_module_info swig_module = {swig_types, 12, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -1693,7 +1694,9 @@ private:
 	RTPIncomingMediaStream* incoming = nullptr;	
 };
 
-class VideoEncoderFacade : public VideoEncoderWorker
+class VideoEncoderFacade : 
+	public VideoEncoderWorker,
+	public RTPReceiver
 {
 public:
 	int SetVideoCodec(v8::Handle<v8::Value> name, int width, int height, int fps, int bitrate, int intraPeriod, const Properties *properties)
@@ -1703,8 +1706,19 @@ public:
 		//Set it
 		return codec!=VideoCodec::UNKNOWN ? VideoEncoderWorker::SetVideoCodec(codec, width, height, fps, bitrate, intraPeriod,  properties? *properties : Properties()) : 0;
 	}
+	virtual int SendPLI(DWORD ssrc)
+	{
+		VideoEncoderWorker::SendFPU();
+	}
 };
 
+
+
+SWIGINTERNINLINE
+v8::Handle<v8::Value> SWIG_From_int  (int value)
+{
+  return SWIGV8_INT32_NEW(value);
+}
 
 
 SWIGINTERN
@@ -1845,13 +1859,6 @@ int SWIG_AsVal_bool (v8::Handle<v8::Value> obj, bool *val)
 
 
 SWIGINTERNINLINE
-v8::Handle<v8::Value> SWIG_From_int  (int value)
-{
-  return SWIGV8_INT32_NEW(value);
-}
-
-
-SWIGINTERNINLINE
 v8::Handle<v8::Value>
 SWIG_From_bool  (bool value)
 {
@@ -1870,6 +1877,7 @@ SWIGV8_ClientData _exports_VideoOutput_clientData;
 SWIGV8_ClientData _exports_VideoPipe_clientData;
 SWIGV8_ClientData _exports_MediaFrameListenerBridge_clientData;
 SWIGV8_ClientData _exports_Properties_clientData;
+SWIGV8_ClientData _exports_RTPReceiver_clientData;
 SWIGV8_ClientData _exports_VideoEncoderFacade_clientData;
 SWIGV8_ClientData _exports_VideoDecoderFacade_clientData;
 
@@ -1932,6 +1940,62 @@ static SwigV8ReturnValue _wrap_new_veto_VideoOutput(const SwigV8Arguments &args)
   SWIGV8_HANDLESCOPE();
   
   SWIG_exception(SWIG_ERROR, "Class VideoOutput can not be instantiated");
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_VideoPipe_Init(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  v8::Handle<v8::Value> jsresult;
+  VideoPipe *arg1 = (VideoPipe *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoPipe_Init.");
+  
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoPipe, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoPipe_Init" "', argument " "1"" of type '" "VideoPipe *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoPipe * >(argp1);
+  result = (int)(arg1)->Init();
+  jsresult = SWIG_From_int(static_cast< int >(result));
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_VideoPipe_End(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  v8::Handle<v8::Value> jsresult;
+  VideoPipe *arg1 = (VideoPipe *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int result;
+  
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoPipe_End.");
+  
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoPipe, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoPipe_End" "', argument " "1"" of type '" "VideoPipe *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoPipe * >(argp1);
+  result = (int)(arg1)->End();
+  jsresult = SWIG_From_int(static_cast< int >(result));
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
 fail:
   SWIGV8_RETURN(SWIGV8_UNDEFINED());
 }
@@ -2311,6 +2375,15 @@ static void _wrap_delete_Properties(v8::Persistent<v8::Value> object, void *para
           object.Clear();
 #endif
         }
+
+
+static SwigV8ReturnValue _wrap_new_veto_RTPReceiver(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIG_exception(SWIG_ERROR, "Class RTPReceiver can not be instantiated");
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
 
 
 static SwigV8ReturnValue _wrap_new_VideoEncoderFacade(const SwigV8Arguments &args) {
@@ -2911,16 +2984,20 @@ static void *_p_VideoPipeTo_p_VideoOutput(void *x, int *SWIGUNUSEDPARM(newmemory
 static void *_p_MediaFrameListenerBridgeTo_p_MediaFrameListener(void *x, int *SWIGUNUSEDPARM(newmemory)) {
     return (void *)((MediaFrameListener *)  ((MediaFrameListenerBridge *) x));
 }
+static void *_p_VideoEncoderFacadeTo_p_RTPReceiver(void *x, int *SWIGUNUSEDPARM(newmemory)) {
+    return (void *)((RTPReceiver *)  ((VideoEncoderFacade *) x));
+}
 static swig_type_info _swigt__p_MediaFrameListener = {"_p_MediaFrameListener", "p_MediaFrameListener|MediaFrameListener *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_MediaFrameListenerBridge = {"_p_MediaFrameListenerBridge", "p_MediaFrameListenerBridge", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_Properties = {"_p_Properties", "Properties *|p_Properties", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_RTPIncomingMediaStream = {"_p_RTPIncomingMediaStream", "p_RTPIncomingMediaStream|RTPIncomingMediaStream *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_RTPReceiver = {"_p_RTPReceiver", "RTPReceiver *|p_RTPReceiver", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoCodecs = {"_p_VideoCodecs", "p_VideoCodecs", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoDecoderFacade = {"_p_VideoDecoderFacade", "p_VideoDecoderFacade|VideoDecoderFacade *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoEncoderFacade = {"_p_VideoEncoderFacade", "p_VideoEncoderFacade|VideoEncoderFacade *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoInput = {"_p_VideoInput", "VideoInput *|p_VideoInput", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoOutput = {"_p_VideoOutput", "p_VideoOutput|VideoOutput *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_VideoPipe = {"_p_VideoPipe", "p_VideoPipe", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_VideoPipe = {"_p_VideoPipe", "VideoPipe *|p_VideoPipe", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
@@ -2928,6 +3005,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_MediaFrameListenerBridge,
   &_swigt__p_Properties,
   &_swigt__p_RTPIncomingMediaStream,
+  &_swigt__p_RTPReceiver,
   &_swigt__p_VideoCodecs,
   &_swigt__p_VideoDecoderFacade,
   &_swigt__p_VideoEncoderFacade,
@@ -2941,6 +3019,7 @@ static swig_cast_info _swigc__p_MediaFrameListener[] = {  {&_swigt__p_MediaFrame
 static swig_cast_info _swigc__p_MediaFrameListenerBridge[] = {  {&_swigt__p_MediaFrameListenerBridge, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_Properties[] = {  {&_swigt__p_Properties, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_RTPIncomingMediaStream[] = {  {&_swigt__p_RTPIncomingMediaStream, 0, 0, 0},  {&_swigt__p_MediaFrameListenerBridge, _p_MediaFrameListenerBridgeTo_p_RTPIncomingMediaStream, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_RTPReceiver[] = {  {&_swigt__p_RTPReceiver, 0, 0, 0},  {&_swigt__p_VideoEncoderFacade, _p_VideoEncoderFacadeTo_p_RTPReceiver, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoCodecs[] = {  {&_swigt__p_VideoCodecs, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoDecoderFacade[] = {  {&_swigt__p_VideoDecoderFacade, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoEncoderFacade[] = {  {&_swigt__p_VideoEncoderFacade, 0, 0, 0},{0, 0, 0, 0}};
@@ -2954,6 +3033,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_MediaFrameListenerBridge,
   _swigc__p_Properties,
   _swigc__p_RTPIncomingMediaStream,
+  _swigc__p_RTPReceiver,
   _swigc__p_VideoCodecs,
   _swigc__p_VideoDecoderFacade,
   _swigc__p_VideoEncoderFacade,
@@ -3330,6 +3410,13 @@ _exports_Properties_clientData.dtor = _wrap_delete_Properties;
 if (SWIGTYPE_p_Properties->clientdata == 0) {
   SWIGTYPE_p_Properties->clientdata = &_exports_Properties_clientData;
 }
+/* Name: _exports_RTPReceiver, Type: p_RTPReceiver, Dtor: 0 */
+v8::Handle<v8::FunctionTemplate> _exports_RTPReceiver_class = SWIGV8_CreateClassTemplate("_exports_RTPReceiver");
+SWIGV8_SET_CLASS_TEMPL(_exports_RTPReceiver_clientData.class_templ, _exports_RTPReceiver_class);
+_exports_RTPReceiver_clientData.dtor = 0;
+if (SWIGTYPE_p_RTPReceiver->clientdata == 0) {
+  SWIGTYPE_p_RTPReceiver->clientdata = &_exports_RTPReceiver_clientData;
+}
 /* Name: _exports_VideoEncoderFacade, Type: p_VideoEncoderFacade, Dtor: _wrap_delete_VideoEncoderFacade */
 v8::Handle<v8::FunctionTemplate> _exports_VideoEncoderFacade_class = SWIGV8_CreateClassTemplate("_exports_VideoEncoderFacade");
 SWIGV8_SET_CLASS_TEMPL(_exports_VideoEncoderFacade_clientData.class_templ, _exports_VideoEncoderFacade_class);
@@ -3347,7 +3434,9 @@ if (SWIGTYPE_p_VideoDecoderFacade->clientdata == 0) {
 
 
   /* register wrapper functions */
-  SWIGV8_AddMemberFunction(_exports_Properties_class, "SetProperty", _wrap_Properties__wrap_Properties_SetProperty);
+  SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "Init", _wrap_VideoPipe_Init);
+SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "End", _wrap_VideoPipe_End);
+SWIGV8_AddMemberFunction(_exports_Properties_class, "SetProperty", _wrap_Properties__wrap_Properties_SetProperty);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "Init", _wrap_VideoEncoderFacade_Init);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "AddListener", _wrap_VideoEncoderFacade_AddListener);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "RemoveListener", _wrap_VideoEncoderFacade_RemoveListener);
@@ -3404,6 +3493,26 @@ if (SWIGTYPE_p_MediaFrameListener->clientdata && !(static_cast<SWIGV8_ClientData
   printf("Unable to inherit baseclass, it didn't exist _exports_MediaFrameListenerBridge _MediaFrameListener\n");
 #endif
 }
+if (SWIGTYPE_p_RTPReceiver->clientdata && !(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_RTPReceiver->clientdata)->class_templ.IsEmpty()))
+{
+#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
+  _exports_VideoEncoderFacade_class->Inherit(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_RTPReceiver->clientdata)->class_templ);
+#else
+  _exports_VideoEncoderFacade_class->Inherit(
+    v8::Local<v8::FunctionTemplate>::New(
+      v8::Isolate::GetCurrent(),
+      static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_RTPReceiver->clientdata)->class_templ)
+    );
+#endif
+  
+#ifdef SWIGRUNTIME_DEBUG
+  printf("Inheritance successful _exports_VideoEncoderFacade _RTPReceiver\n");
+#endif
+} else {
+#ifdef SWIGRUNTIME_DEBUG
+  printf("Unable to inherit baseclass, it didn't exist _exports_VideoEncoderFacade _RTPReceiver\n");
+#endif
+}
 
 
   /* class instances */
@@ -3455,6 +3564,12 @@ _exports_Properties_class_0->SetCallHandler(_wrap_new_Properties);
 _exports_Properties_class_0->Inherit(_exports_Properties_class);
 _exports_Properties_class_0->SetHiddenPrototype(true);
 v8::Handle<v8::Object> _exports_Properties_obj = _exports_Properties_class_0->GetFunction();
+/* Class: RTPReceiver (_exports_RTPReceiver) */
+v8::Handle<v8::FunctionTemplate> _exports_RTPReceiver_class_0 = SWIGV8_CreateClassTemplate("RTPReceiver");
+_exports_RTPReceiver_class_0->SetCallHandler(_wrap_new_veto_RTPReceiver);
+_exports_RTPReceiver_class_0->Inherit(_exports_RTPReceiver_class);
+_exports_RTPReceiver_class_0->SetHiddenPrototype(true);
+v8::Handle<v8::Object> _exports_RTPReceiver_obj = _exports_RTPReceiver_class_0->GetFunction();
 /* Class: VideoEncoderFacade (_exports_VideoEncoderFacade) */
 v8::Handle<v8::FunctionTemplate> _exports_VideoEncoderFacade_class_0 = SWIGV8_CreateClassTemplate("VideoEncoderFacade");
 _exports_VideoEncoderFacade_class_0->SetCallHandler(_wrap_new_VideoEncoderFacade);
@@ -3482,6 +3597,7 @@ exports_obj->Set(SWIGV8_SYMBOL_NEW("VideoOutput"), _exports_VideoOutput_obj);
 exports_obj->Set(SWIGV8_SYMBOL_NEW("VideoPipe"), _exports_VideoPipe_obj);
 exports_obj->Set(SWIGV8_SYMBOL_NEW("MediaFrameListenerBridge"), _exports_MediaFrameListenerBridge_obj);
 exports_obj->Set(SWIGV8_SYMBOL_NEW("Properties"), _exports_Properties_obj);
+exports_obj->Set(SWIGV8_SYMBOL_NEW("RTPReceiver"), _exports_RTPReceiver_obj);
 exports_obj->Set(SWIGV8_SYMBOL_NEW("VideoEncoderFacade"), _exports_VideoEncoderFacade_obj);
 exports_obj->Set(SWIGV8_SYMBOL_NEW("VideoDecoderFacade"), _exports_VideoDecoderFacade_obj);
 
