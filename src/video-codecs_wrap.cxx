@@ -1709,9 +1709,88 @@ public:
 	virtual int SendPLI(DWORD ssrc)
 	{
 		VideoEncoderWorker::SendFPU();
+		return 1;
 	}
 };
 
+
+
+#include <float.h>
+
+
+#include <math.h>
+
+
+/* Getting isfinite working pre C99 across multiple platforms is non-trivial. Users can provide SWIG_isfinite on older platforms. */
+#ifndef SWIG_isfinite
+/* isfinite() is a macro for C99 */
+# if defined(isfinite)
+#  define SWIG_isfinite(X) (isfinite(X))
+# elif defined(__cplusplus) && __cplusplus >= 201103L
+/* Use a template so that this works whether isfinite() is std::isfinite() or
+ * in the global namespace.  The reality seems to vary between compiler
+ * versions.
+ *
+ * Make sure namespace std exists to avoid compiler warnings.
+ *
+ * extern "C++" is required as this fragment can end up inside an extern "C" { } block
+ */
+namespace std { }
+extern "C++" template<typename T>
+inline int SWIG_isfinite_func(T x) {
+  using namespace std;
+  return isfinite(x);
+}
+#  define SWIG_isfinite(X) (SWIG_isfinite_func(X))
+# elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2))
+#  define SWIG_isfinite(X) (__builtin_isfinite(X))
+# elif defined(__clang__) && defined(__has_builtin)
+#  if __has_builtin(__builtin_isfinite)
+#   define SWIG_isfinite(X) (__builtin_isfinite(X))
+#  endif
+# elif defined(_MSC_VER)
+#  define SWIG_isfinite(X) (_finite(X))
+# elif defined(__sun) && defined(__SVR4)
+#  include <ieeefp.h>
+#  define SWIG_isfinite(X) (finite(X))
+# endif
+#endif
+
+
+/* Accept infinite as a valid float value unless we are unable to check if a value is finite */
+#ifdef SWIG_isfinite
+# define SWIG_Float_Overflow_Check(X) ((X < -FLT_MAX || X > FLT_MAX) && SWIG_isfinite(X))
+#else
+# define SWIG_Float_Overflow_Check(X) ((X < -FLT_MAX || X > FLT_MAX))
+#endif
+
+
+SWIGINTERN
+int SWIG_AsVal_double (v8::Handle<v8::Value> obj, double *val)
+{
+  if(!obj->IsNumber()) {
+    return SWIG_TypeError;
+  }
+  if(val) *val = obj->NumberValue();
+
+  return SWIG_OK;
+}
+
+
+SWIGINTERN int
+SWIG_AsVal_float (v8::Handle<v8::Value> obj, float *val)
+{
+  double v;
+  int res = SWIG_AsVal_double (obj, &v);
+  if (SWIG_IsOK(res)) {
+    if (SWIG_Float_Overflow_Check(v)) {
+      return SWIG_OverflowError;
+    } else {
+      if (val) *val = static_cast< float >(v);
+    }
+  }  
+  return res;
+}
 
 
 SWIGINTERNINLINE
@@ -1784,24 +1863,6 @@ SWIG_AsCharPtrAndSize(v8::Handle<v8::Value> valRef, char** cptr, size_t* psize, 
 
 
 
-
-
-SWIGINTERN
-int SWIG_AsVal_double (v8::Handle<v8::Value> obj, double *val)
-{
-  if(!obj->IsNumber()) {
-    return SWIG_TypeError;
-  }
-  if(val) *val = obj->NumberValue();
-
-  return SWIG_OK;
-}
-
-
-#include <float.h>
-
-
-#include <math.h>
 
 
 SWIGINTERNINLINE int
@@ -1950,19 +2011,28 @@ static SwigV8ReturnValue _wrap_VideoPipe_Init(const SwigV8Arguments &args) {
   
   v8::Handle<v8::Value> jsresult;
   VideoPipe *arg1 = (VideoPipe *) 0 ;
+  float arg2 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
+  float val2 ;
+  int ecode2 = 0 ;
   int result;
   
-  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoPipe_Init.");
+  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoPipe_Init.");
   
   res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoPipe, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoPipe_Init" "', argument " "1"" of type '" "VideoPipe *""'"); 
   }
   arg1 = reinterpret_cast< VideoPipe * >(argp1);
-  result = (int)(arg1)->Init();
+  ecode2 = SWIG_AsVal_float(args[0], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VideoPipe_Init" "', argument " "2"" of type '" "float""'");
+  } 
+  arg2 = static_cast< float >(val2);
+  result = (int)(arg1)->Init(arg2);
   jsresult = SWIG_From_int(static_cast< int >(result));
+  
   
   
   SWIGV8_RETURN(jsresult);

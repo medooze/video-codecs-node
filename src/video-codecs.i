@@ -138,6 +138,7 @@ public:
 	virtual int SendPLI(DWORD ssrc)
 	{
 		VideoEncoderWorker::SendFPU();
+		return 1;
 	}
 };
 
@@ -170,7 +171,7 @@ struct VideoPipe :
 	public VideoInput,
 	public VideoOutput
 {
-	int Init();
+	int Init(float scaleResolutionDownBy);
 	int End();
 };
 
