@@ -76,6 +76,7 @@
 							"media-server/src/vp8/vp8decoder.cpp",
 							"media-server/src/h264/h264encoder.cpp",
 							"media-server/src/h264/h264decoder.cpp",
+							"media-server/src/vp9/VP9Decoder.cpp",
 							"media-server/src/VideoLayerSelector.cpp",
 							"media-server/src/h264/H264LayerSelector.cpp",
 							"media-server/src/vp8/VP8LayerSelector.cpp",
