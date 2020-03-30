@@ -64,6 +64,7 @@
 							"media-server/src/VideoDecoderWorker.cpp",
 							"media-server/src/VideoEncoderWorker.cpp",
 							"media-server/src/videopipe.cpp",
+							"media-server/src/EventLoop.cpp",
 							"media-server/src/MediaFrameListenerBridge.cpp",
 							"media-server/src/avcdescriptor.cpp",
 							"media-server/src/framescaler.cpp",
