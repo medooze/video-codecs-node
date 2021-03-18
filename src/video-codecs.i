@@ -128,10 +128,10 @@ class VideoEncoderFacade :
 	public RTPReceiver
 {
 public:
-	int SetVideoCodec(v8::Handle<v8::Value> name, int width, int height, int fps, int bitrate, int intraPeriod, const Properties *properties)
+	int SetVideoCodec(v8::Local<v8::Value> name, int width, int height, int fps, int bitrate, int intraPeriod, const Properties *properties)
 	{
 		//Get codec
-		auto codec = VideoCodec::GetCodecForName(*v8::String::Utf8Value(name.As<v8::String>()));
+		auto codec = VideoCodec::GetCodecForName(*Nan::Utf8String(name));
 		//Set it
 		return codec!=VideoCodec::UNKNOWN ? VideoEncoderWorker::SetVideoCodec(codec, width, height, fps, bitrate, intraPeriod,  properties? *properties : Properties()) : 0;
 	}
@@ -199,7 +199,7 @@ struct VideoEncoderFacade : public RTPReceiver
 	int Init(VideoInput *input);
 	bool AddListener(MediaFrameListener *listener);
 	bool RemoveListener(MediaFrameListener *listener);
-	int SetVideoCodec(v8::Handle<v8::Value> name, int width, int height, int fps, int bitrate, int intraPeriod, const Properties *properties );
+	int SetVideoCodec(v8::Local<v8::Value> name, int width, int height, int fps, int bitrate, int intraPeriod, const Properties *properties );
 	int Start();
 	int Stop();
 	int End();
