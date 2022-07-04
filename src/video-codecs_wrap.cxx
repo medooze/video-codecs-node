@@ -159,13 +159,8 @@ template <typename T> T SwigValueInit() {
 
 #define SWIG_exception_fail(code, msg) do { SWIG_Error(code, msg); SWIG_fail; } while(0) 
 
-#define SWIG_contract_assert(expr, msg) if (!(expr)) { SWIG_Error(SWIG_RuntimeError, msg); SWIG_fail; } else 
+#define SWIG_contract_assert(expr, msg) do { if (!(expr)) { SWIG_Error(SWIG_RuntimeError, msg); SWIG_fail; } } while (0) 
 
-
-
-#ifndef SWIG_V8_VERSION
-#define SWIG_V8_VERSION 0x031110
-#endif
 
 
 #include <node.h>
@@ -175,14 +170,16 @@ template <typename T> T SwigValueInit() {
 
 #include <v8.h>
 
-#if defined(V8_MAJOR_VERSION) && defined(V8_MINOR_VERSION)
 #undef SWIG_V8_VERSION
-#define SWIG_V8_VERSION (V8_MAJOR_VERSION * 256 + V8_MINOR_VERSION)
-#endif
+#define SWIG_V8_VERSION ((V8_MAJOR_VERSION / 10) * 4096 + \
+                         (V8_MAJOR_VERSION % 10) * 256 + \
+                         (V8_MINOR_VERSION / 10) * 16 + \
+                         (V8_MINOR_VERSION % 10))
 
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <assert.h>
 
 /* -----------------------------------------------------------------------------
  * swigrun.swg
@@ -301,7 +298,7 @@ template <typename T> T SwigValueInit() {
    SWIG errors code.
 
    Finally, if the SWIG_CASTRANK_MODE is enabled, the result code
-   allows to return the 'cast rank', for example, if you have this
+   allows returning the 'cast rank', for example, if you have this
 
        int food(double)
        int fooi(int);
@@ -476,7 +473,7 @@ SWIG_TypeCheck(const char *c, swig_type_info *ty) {
   Identical to SWIG_TypeCheck, except strcmp is replaced with a pointer comparison
 */
 SWIGRUNTIME swig_cast_info *
-SWIG_TypeCheckStruct(swig_type_info *from, swig_type_info *ty) {
+SWIG_TypeCheckStruct(const swig_type_info *from, swig_type_info *ty) {
   if (ty) {
     swig_cast_info *iter = ty->cast;
     while (iter) {
@@ -781,62 +778,30 @@ SWIG_UnpackDataName(const char *c, void *ptr, size_t sz, const char *name) {
  * Useful table of versions: https://nodejs.org/en/download/releases/
  * ---------------------------------------------------------------------------*/
 
-// First v8 version that uses "SetWeak" and not "MakeWeak"
-
-#define SWIGV8_SETWEAK_VERSION 0x032224
-
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031803)
-#define SWIGV8_STRING_NEW2(cstr, len) v8::String::New(cstr, len)
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 #define SWIGV8_STRING_NEW2(cstr, len) v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), cstr, v8::String::kNormalString, len)
 #else
 #define SWIGV8_STRING_NEW2(cstr, len) (v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), cstr, v8::NewStringType::kNormal, len)).ToLocalChecked()
 #endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-typedef v8::Handle<v8::Value> SwigV8ReturnValue;
-typedef v8::Arguments SwigV8Arguments;
-typedef v8::AccessorInfo SwigV8PropertyCallbackInfo;
-#define SWIGV8_RETURN(val) return scope.Close(val)
-#define SWIGV8_RETURN_INFO(val, info) return scope.Close(val)
-#else
 typedef void SwigV8ReturnValue;
 typedef v8::FunctionCallbackInfo<v8::Value> SwigV8Arguments;
 typedef v8::PropertyCallbackInfo<v8::Value> SwigV8PropertyCallbackInfo;
 #define SWIGV8_RETURN(val) args.GetReturnValue().Set(val); return
 #define SWIGV8_RETURN_INFO(val, info) info.GetReturnValue().Set(val); return
-#endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032117)
-#define SWIGV8_HANDLESCOPE() v8::HandleScope scope
-#define SWIGV8_HANDLESCOPE_ESC() v8::HandleScope scope
-#define SWIGV8_ESCAPE(val) return scope.Close(val)
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032224)
-#define SWIGV8_HANDLESCOPE() v8::HandleScope scope(v8::Isolate::GetCurrent());
-#define SWIGV8_HANDLESCOPE_ESC() v8::HandleScope scope(v8::Isolate::GetCurrent());
-#define SWIGV8_ESCAPE(val) return scope.Close(val)
-#else
 #define SWIGV8_HANDLESCOPE() v8::HandleScope scope(v8::Isolate::GetCurrent());
 #define SWIGV8_HANDLESCOPE_ESC() v8::EscapableHandleScope scope(v8::Isolate::GetCurrent());
 #define SWIGV8_ESCAPE(val) return scope.Escape(val)
-#endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032224)
-#define SWIGV8_ADJUST_MEMORY(size) v8::V8::AdjustAmountOfExternalAllocatedMemory(size)
-#define SWIGV8_CURRENT_CONTEXT() v8::Context::GetCurrent()
-#define SWIGV8_THROW_EXCEPTION(err) v8::ThrowException(err)
-#define SWIGV8_STRING_NEW(str) v8::String::New(str)
-#define SWIGV8_SYMBOL_NEW(sym) v8::String::NewSymbol(sym)
-#elif (SWIG_V8_VERSION < 0x0704)
 #define SWIGV8_ADJUST_MEMORY(size) v8::Isolate::GetCurrent()->AdjustAmountOfExternalAllocatedMemory(size)
 #define SWIGV8_CURRENT_CONTEXT() v8::Isolate::GetCurrent()->GetCurrentContext()
 #define SWIGV8_THROW_EXCEPTION(err) v8::Isolate::GetCurrent()->ThrowException(err)
+
+#if (SWIG_V8_VERSION < 0x0704)
 #define SWIGV8_STRING_NEW(str) v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), str, v8::String::kNormalString)
 #define SWIGV8_SYMBOL_NEW(sym) v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), sym, v8::String::kNormalString)
 #else
-#define SWIGV8_ADJUST_MEMORY(size) v8::Isolate::GetCurrent()->AdjustAmountOfExternalAllocatedMemory(size)
-#define SWIGV8_CURRENT_CONTEXT() v8::Isolate::GetCurrent()->GetCurrentContext()
-#define SWIGV8_THROW_EXCEPTION(err) v8::Isolate::GetCurrent()->ThrowException(err)
 #define SWIGV8_STRING_NEW(str) (v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), str, v8::NewStringType::kNormal)).ToLocalChecked()
 #define SWIGV8_SYMBOL_NEW(sym) (v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), sym, v8::NewStringType::kNormal)).ToLocalChecked()
 #endif
@@ -847,28 +812,7 @@ typedef v8::PropertyCallbackInfo<v8::Value> SwigV8PropertyCallbackInfo;
 #define SWIGV8_MAYBE_CHECK(maybe) maybe.Check()
 #endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032318)
-#define SWIGV8_ARRAY_NEW() v8::Array::New()
-#define SWIGV8_BOOLEAN_NEW(bool) v8::Boolean::New(bool)
-#define SWIGV8_EXTERNAL_NEW(val) v8::External::New(val)
-#define SWIGV8_FUNCTEMPLATE_NEW(func) v8::FunctionTemplate::New(func)
-#define SWIGV8_FUNCTEMPLATE_NEW_VOID() v8::FunctionTemplate::New()
-#define SWIGV8_INT32_NEW(num) v8::Int32::New(num)
-#define SWIGV8_INTEGER_NEW(num) v8::Integer::New(num)
-#define SWIGV8_INTEGER_NEW_UNS(num) v8::Integer::NewFromUnsigned(num)
-#define SWIGV8_NUMBER_NEW(num) v8::Number::New(num)
-#define SWIGV8_OBJECT_NEW() v8::Object::New()
-#define SWIGV8_UNDEFINED() v8::Undefined()
-#define SWIGV8_ARRAY v8::Handle<v8::Array>
-#define SWIGV8_FUNCTION_TEMPLATE v8::Handle<v8::FunctionTemplate>
-#define SWIGV8_OBJECT v8::Handle<v8::Object>
-#define SWIGV8_OBJECT_TEMPLATE v8::Handle<v8::ObjectTemplate>
-#define SWIGV8_VALUE v8::Handle<v8::Value>
-#define SWIGV8_NULL() v8::Null()
-#define SWIGV8_ARRAY_GET(array, index) (array)->Get(index)
-#define SWIGV8_ARRAY_SET(array, index, value) (array)->Set(index, value)
-#else
-#define SWIGV8_ARRAY_NEW() v8::Array::New(v8::Isolate::GetCurrent())
+#define SWIGV8_ARRAY_NEW(size) v8::Array::New(v8::Isolate::GetCurrent(), size)
 #define SWIGV8_BOOLEAN_NEW(bool) v8::Boolean::New(v8::Isolate::GetCurrent(), bool)
 #define SWIGV8_EXTERNAL_NEW(val) v8::External::New(v8::Isolate::GetCurrent(), val)
 #define SWIGV8_FUNCTEMPLATE_NEW(func) v8::FunctionTemplate::New(v8::Isolate::GetCurrent(), func)
@@ -887,25 +831,10 @@ typedef v8::PropertyCallbackInfo<v8::Value> SwigV8PropertyCallbackInfo;
 #define SWIGV8_NULL() v8::Null(v8::Isolate::GetCurrent())
 #define SWIGV8_ARRAY_GET(array, index) (array)->Get(SWIGV8_CURRENT_CONTEXT(), index).ToLocalChecked()
 #define SWIGV8_ARRAY_SET(array, index, value) SWIGV8_MAYBE_CHECK((array)->Set(SWIGV8_CURRENT_CONTEXT(), index, value))
-#endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-#define SWIGV8_SET_CLASS_TEMPL(class_templ, class) class_templ = v8::Persistent<v8::FunctionTemplate>::New(class);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-#define SWIGV8_SET_CLASS_TEMPL(class_templ, class) class_templ = v8::Persistent<v8::FunctionTemplate>::New(v8::Isolate::GetCurrent(), class);
-#else
 #define SWIGV8_SET_CLASS_TEMPL(class_templ, class) class_templ.Reset(v8::Isolate::GetCurrent(), class);
-#endif
 
-#ifdef NODE_VERSION
-#if NODE_VERSION_AT_LEAST(10, 12, 0)
-#define SWIG_NODE_AT_LEAST_1012
-#endif
-#endif
-
-//Necessary to check Node.js version because V8 API changes are backported in Node.js
-#if (defined(NODE_VERSION) && !defined(SWIG_NODE_AT_LEAST_1012)) || \
-    (!defined(NODE_VERSION) && (V8_MAJOR_VERSION-0) < 7)
+#if SWIG_V8_VERSION < 0x0608
 #define SWIGV8_TO_OBJECT(handle) (handle)->ToObject()
 #define SWIGV8_TO_STRING(handle) (handle)->ToString()
 #define SWIGV8_NUMBER_VALUE(handle) (handle)->NumberValue()
@@ -913,22 +842,18 @@ typedef v8::PropertyCallbackInfo<v8::Value> SwigV8PropertyCallbackInfo;
 #define SWIGV8_BOOLEAN_VALUE(handle) (handle)->BooleanValue()
 #define SWIGV8_WRITE_UTF8(handle, buffer, len) (handle)->WriteUtf8(buffer, len)
 #define SWIGV8_UTF8_LENGTH(handle) (handle)->Utf8Length()
-#elif (SWIG_V8_VERSION < 0x0704)
-#define SWIGV8_TO_OBJECT(handle) (handle)->ToObject(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked()
-#define SWIGV8_TO_STRING(handle) (handle)->ToString(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked()
-#define SWIGV8_NUMBER_VALUE(handle) (handle)->NumberValue(SWIGV8_CURRENT_CONTEXT()).ToChecked()
-#define SWIGV8_INTEGER_VALUE(handle) (handle)->IntegerValue(SWIGV8_CURRENT_CONTEXT()).ToChecked()
-#define SWIGV8_BOOLEAN_VALUE(handle) (handle)->BooleanValue(SWIGV8_CURRENT_CONTEXT()).ToChecked()
-#define SWIGV8_WRITE_UTF8(handle, buffer, len) (handle)->WriteUtf8(v8::Isolate::GetCurrent(), buffer, len)
-#define SWIGV8_UTF8_LENGTH(handle) (handle)->Utf8Length(v8::Isolate::GetCurrent())
 #else
 #define SWIGV8_TO_OBJECT(handle) (handle)->ToObject(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked()
 #define SWIGV8_TO_STRING(handle) (handle)->ToString(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked()
 #define SWIGV8_NUMBER_VALUE(handle) (handle)->NumberValue(SWIGV8_CURRENT_CONTEXT()).ToChecked()
 #define SWIGV8_INTEGER_VALUE(handle) (handle)->IntegerValue(SWIGV8_CURRENT_CONTEXT()).ToChecked()
-#define SWIGV8_BOOLEAN_VALUE(handle) (handle)->BooleanValue(v8::Isolate::GetCurrent())
 #define SWIGV8_WRITE_UTF8(handle, buffer, len) (handle)->WriteUtf8(v8::Isolate::GetCurrent(), buffer, len)
 #define SWIGV8_UTF8_LENGTH(handle) (handle)->Utf8Length(v8::Isolate::GetCurrent())
+#if (SWIG_V8_VERSION < 0x0704)
+#define SWIGV8_BOOLEAN_VALUE(handle) (handle)->BooleanValue(SWIGV8_CURRENT_CONTEXT()).ToChecked()
+#else
+#define SWIGV8_BOOLEAN_VALUE(handle) (handle)->BooleanValue(v8::Isolate::GetCurrent())
+#endif
 #endif
 
 /* ---------------------------------------------------------------------------
@@ -996,23 +921,8 @@ public:
   };
 
   ~SWIGV8_Proxy() {
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-    handle.ClearWeak();
-    handle.Dispose();
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032100)
-    handle.ClearWeak(v8::Isolate::GetCurrent());
-    handle.Dispose(v8::Isolate::GetCurrent());
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-    handle.ClearWeak();
-    handle.Dispose();
-#else    
     handle.ClearWeak();
     handle.Reset();
-#endif
-
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-    handle.Clear();
-#endif
 
     SWIGV8_ADJUST_MEMORY(-SWIGV8_AVG_OBJ_SIZE);
   }
@@ -1027,17 +937,7 @@ class SWIGV8_ClientData {
 public:
   v8::Persistent<v8::FunctionTemplate> class_templ;
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-  void (*dtor) (v8::Persistent< v8::Value> object, void *parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-  void (*dtor) (v8::Isolate *isolate, v8::Persistent< v8::Value> object, void *parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-  void (*dtor) (v8::Isolate *isolate, v8::Persistent< v8::Object > *object, SWIGV8_Proxy *proxy);
-#elif (V8_MAJOR_VERSION-0) < 5
-  void (*dtor) (const v8::WeakCallbackData<v8::Object, SWIGV8_Proxy> &data);
-#else
   void (*dtor) (const v8::WeakCallbackInfo<SWIGV8_Proxy> &data);
-#endif
 };
 
 SWIGRUNTIME v8::Persistent<v8::FunctionTemplate> SWIGV8_SWIGTYPE_Proxy_class_templ;
@@ -1047,17 +947,12 @@ SWIGRUNTIME int SWIG_V8_ConvertInstancePtr(SWIGV8_OBJECT objRef, void **ptr, swi
 
   if(objRef->InternalFieldCount() < 1) return SWIG_ERROR;
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031511)
-  v8::Handle<v8::Value> cdataRef = objRef->GetInternalField(0);
-  SWIGV8_Proxy *cdata = static_cast<SWIGV8_Proxy *>(v8::External::Unwrap(cdataRef));
-#else
   SWIGV8_Proxy *cdata = static_cast<SWIGV8_Proxy *>(objRef->GetAlignedPointerFromInternalField(0));
-#endif
 
   if(cdata == NULL) {
     return SWIG_ERROR;
   }
-  if(cdata->info != info) {
+  if(info && cdata->info != info) {
     swig_cast_info *tc = SWIG_TypeCheckStruct(cdata->info, info);
     if (!tc && cdata->info->name) {
       tc = SWIG_TypeCheck(cdata->info->name, info);
@@ -1068,6 +963,7 @@ SWIGRUNTIME int SWIG_V8_ConvertInstancePtr(SWIGV8_OBJECT objRef, void **ptr, swi
     }
     int newmemory = 0;
     *ptr = SWIG_TypeCast(tc, cdata->swigCObject, &newmemory);
+    assert(!newmemory); /* newmemory handling not yet implemented */
   } else {
     *ptr = cdata->swigCObject;
   }
@@ -1079,22 +975,8 @@ SWIGRUNTIME int SWIG_V8_ConvertInstancePtr(SWIGV8_OBJECT objRef, void **ptr, swi
 }
 
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-SWIGRUNTIME void SWIGV8_Proxy_DefaultDtor(v8::Persistent< v8::Value > object, void *parameter) {
-  SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-SWIGRUNTIME void SWIGV8_Proxy_DefaultDtor(v8::Isolate *, v8::Persistent< v8::Value > object, void *parameter) {
-  SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-SWIGRUNTIME void SWIGV8_Proxy_DefaultDtor(v8::Isolate *, v8::Persistent< v8::Object > *object, SWIGV8_Proxy *proxy) {
-#elif (V8_MAJOR_VERSION-0) < 5
-SWIGRUNTIME void SWIGV8_Proxy_DefaultDtor(const v8::WeakCallbackData<v8::Object, SWIGV8_Proxy> &data) {
-  SWIGV8_Proxy *proxy = data.GetParameter();
-#else
 SWIGRUNTIME void SWIGV8_Proxy_DefaultDtor(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
   SWIGV8_Proxy *proxy = data.GetParameter();
-#endif
-
   delete proxy;
 }
 
@@ -1102,16 +984,11 @@ SWIGRUNTIME int SWIG_V8_GetInstancePtr(SWIGV8_VALUE valRef, void **ptr) {
   if(!valRef->IsObject()) {
     return SWIG_TypeError;
   }
-  SWIGV8_OBJECT objRef = SWIGV8_TO_OBJECT(valRef);
+  SWIGV8_OBJECT objRef = SWIGV8_OBJECT::Cast(valRef);
 
   if(objRef->InternalFieldCount() < 1) return SWIG_ERROR;
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031511)
-  v8::Handle<v8::Value> cdataRef = objRef->GetInternalField(0);
-  SWIGV8_Proxy *cdata = static_cast<SWIGV8_Proxy *>(v8::External::Unwrap(cdataRef));
-#else
   SWIGV8_Proxy *cdata = static_cast<SWIGV8_Proxy *>(objRef->GetAlignedPointerFromInternalField(0));
-#endif
 
   if(cdata == NULL) {
     return SWIG_ERROR;
@@ -1128,58 +1005,17 @@ SWIGRUNTIME void SWIGV8_SetPrivateData(SWIGV8_OBJECT obj, void *ptr, swig_type_i
   cdata->swigCMemOwn = (flags & SWIG_POINTER_OWN) ? 1 : 0;
   cdata->info = info;
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031511)
-  obj->SetPointerInInternalField(0, cdata);
-#else
   obj->SetAlignedPointerInInternalField(0, cdata);
-#endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-  cdata->handle = v8::Persistent<v8::Object>::New(obj);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-  cdata->handle = v8::Persistent<v8::Object>::New(v8::Isolate::GetCurrent(), obj);
-#else
   cdata->handle.Reset(v8::Isolate::GetCurrent(), obj);
-#endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-  // clientdata must be set for owned data as we need to register the dtor
-  if(cdata->swigCMemOwn && (SWIGV8_ClientData*)info->clientdata) {
-    cdata->handle.MakeWeak(cdata, ((SWIGV8_ClientData*)info->clientdata)->dtor);
-  } else {
-    cdata->handle.MakeWeak(cdata, SWIGV8_Proxy_DefaultDtor);
-  }
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031918)
-  if(cdata->swigCMemOwn && (SWIGV8_ClientData*)info->clientdata) {
-    cdata->handle.MakeWeak(v8::Isolate::GetCurrent(), cdata, ((SWIGV8_ClientData*)info->clientdata)->dtor);
-  } else {
-    cdata->handle.MakeWeak(v8::Isolate::GetCurrent(), cdata, SWIGV8_Proxy_DefaultDtor);
-  }
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-  if(cdata->swigCMemOwn && (SWIGV8_ClientData*)info->clientdata) {
-    cdata->handle.MakeWeak(cdata, ((SWIGV8_ClientData*)info->clientdata)->dtor);
-  } else {
-    cdata->handle.MakeWeak(cdata, SWIGV8_Proxy_DefaultDtor);
-  }
-#elif (V8_MAJOR_VERSION-0) < 5
-  if(cdata->swigCMemOwn && (SWIGV8_ClientData*)info->clientdata) {
-    cdata->handle.SetWeak(cdata, ((SWIGV8_ClientData*)info->clientdata)->dtor);
-  } else {
-    cdata->handle.SetWeak(cdata, SWIGV8_Proxy_DefaultDtor);
-  }
-#else
   if(cdata->swigCMemOwn && (SWIGV8_ClientData*)info->clientdata) {
     cdata->handle.SetWeak(cdata, ((SWIGV8_ClientData*)info->clientdata)->dtor, v8::WeakCallbackType::kParameter);
   } else {
     cdata->handle.SetWeak(cdata, SWIGV8_Proxy_DefaultDtor, v8::WeakCallbackType::kParameter);
   }
-#endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-  cdata->handle.MarkIndependent();
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032100)
-  cdata->handle.MarkIndependent(v8::Isolate::GetCurrent());
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
   cdata->handle.MarkIndependent();
 // Looks like future versions do not require that anymore:
 // https://monorail-prod.appspot.com/p/chromium/issues/detail?id=923361#c11
@@ -1197,7 +1033,7 @@ SWIGRUNTIME int SWIG_V8_ConvertPtr(SWIGV8_VALUE valRef, void **ptr, swig_type_in
   if(!valRef->IsObject()) {
     return SWIG_TypeError;
   }
-  SWIGV8_OBJECT objRef = SWIGV8_TO_OBJECT(valRef);
+  SWIGV8_OBJECT objRef = SWIGV8_OBJECT::Cast(valRef);
   return SWIG_V8_ConvertInstancePtr(objRef, ptr, info, flags);
 }
 
@@ -1207,21 +1043,10 @@ SWIGRUNTIME SWIGV8_VALUE SWIG_V8_NewPointerObj(void *ptr, swig_type_info *info, 
   SWIGV8_FUNCTION_TEMPLATE class_templ;
 
   if (ptr == NULL) {
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-    SWIGV8_ESCAPE(SWIGV8_NULL());
-#else    
     v8::Local<v8::Primitive> result = SWIGV8_NULL();
     SWIGV8_ESCAPE(result);
-#endif
   }
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-  if(info->clientdata != 0) {
-    class_templ = ((SWIGV8_ClientData*) info->clientdata)->class_templ;
-  } else {
-    class_templ = SWIGV8_SWIGTYPE_Proxy_class_templ;
-  }
-#else
   v8::Isolate *isolate = v8::Isolate::GetCurrent();
 
   if(info->clientdata != 0) {
@@ -1229,13 +1054,8 @@ SWIGRUNTIME SWIGV8_VALUE SWIG_V8_NewPointerObj(void *ptr, swig_type_info *info, 
   } else {
     class_templ = v8::Local<v8::FunctionTemplate>::New(isolate, SWIGV8_SWIGTYPE_Proxy_class_templ);
   }
-#endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903) || (SWIG_V8_VERSION < 0x0704)
-  v8::Local<v8::Object> result = class_templ->InstanceTemplate()->NewInstance();
-#else
   v8::Local<v8::Object> result = class_templ->InstanceTemplate()->NewInstance(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
-#endif
 
   SWIGV8_SetPrivateData(result, ptr, info, flags);
 
@@ -1330,14 +1150,10 @@ int SwigV8Packed_Check(SWIGV8_VALUE valRef) {
   
   SWIGV8_OBJECT objRef = SWIGV8_TO_OBJECT(valRef);
   if(objRef->InternalFieldCount() < 1) return false;
-#if (V8_MAJOR_VERSION-0) < 5
-  v8::Handle<v8::Value> flag = objRef->GetHiddenValue(SWIGV8_STRING_NEW("__swig__packed_data__"));
-#else
   v8::Local<v8::Private> privateKey = v8::Private::ForApi(v8::Isolate::GetCurrent(), SWIGV8_STRING_NEW("__swig__packed_data__"));
   v8::Local<v8::Value> flag;
   if (!objRef->GetPrivate(SWIGV8_CURRENT_CONTEXT(), privateKey).ToLocal(&flag))
     return false;
-#endif
   return (flag->IsBoolean() && SWIGV8_BOOLEAN_VALUE(flag));
 }
 
@@ -1350,12 +1166,7 @@ swig_type_info *SwigV8Packed_UnpackData(SWIGV8_VALUE valRef, void *ptr, size_t s
 
     SWIGV8_OBJECT objRef = SWIGV8_TO_OBJECT(valRef);
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031511)
-    v8::Handle<v8::Value> cdataRef = objRef->GetInternalField(0);
-    sobj = static_cast<SwigV8PackedData*>(v8::External::Unwrap(cdataRef));
-#else
     sobj = static_cast<SwigV8PackedData*>(objRef->GetAlignedPointerFromInternalField(0));
-#endif
     if (sobj == NULL || sobj->size != size) return 0;
     memcpy(ptr, sobj->data, size);
     return sobj->type;
@@ -1378,38 +1189,9 @@ int SWIGV8_ConvertPacked(SWIGV8_VALUE valRef, void *ptr, size_t sz, swig_type_in
   return SWIG_OK;
 }
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-SWIGRUNTIME void _wrap_SwigV8PackedData_delete(v8::Persistent< v8::Value > object, void *parameter) {
-  SwigV8PackedData *cdata = static_cast<SwigV8PackedData *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-SWIGRUNTIME void _wrap_SwigV8PackedData_delete(v8::Isolate *isolate, v8::Persistent<v8::Value> object, void *parameter) {
-  SwigV8PackedData *cdata = static_cast<SwigV8PackedData *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-SWIGRUNTIME void _wrap_SwigV8PackedData_delete(v8::Isolate *isolate, v8::Persistent<v8::Object> *object, SwigV8PackedData *cdata) {
-#elif (V8_MAJOR_VERSION-0) < 5
-SWIGRUNTIME void _wrap_SwigV8PackedData_delete(const v8::WeakCallbackData<v8::Object, SwigV8PackedData> &data) {
-  v8::Local<v8::Object> object = data.GetValue();
-  SwigV8PackedData *cdata = data.GetParameter();
-#else
 SWIGRUNTIME void _wrap_SwigV8PackedData_delete(const v8::WeakCallbackInfo<SwigV8PackedData> &data) {
   SwigV8PackedData *cdata = data.GetParameter();
-#endif
-
   delete cdata;
-
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-  object.Clear();
-  object.Dispose();
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-  object.Clear();
-  object.Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032100)
-  object->Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-  object->Dispose();
-#elif (V8_MAJOR_VERSION-0) < 5
-  object.Clear();
-#endif
 }
 
 SWIGRUNTIME
@@ -1420,46 +1202,16 @@ SWIGV8_VALUE SWIGV8_NewPackedObj(void *data, size_t size, swig_type_info *type) 
 //  v8::Handle<v8::Object> obj = SWIGV8_OBJECT_NEW();
   v8::Local<v8::Object> obj = SWIGV8_OBJECT_NEW();
 
-#if (V8_MAJOR_VERSION-0) < 5
-  obj->SetHiddenValue(SWIGV8_STRING_NEW("__swig__packed_data__"), SWIGV8_BOOLEAN_NEW(true));
-#else
   v8::Local<v8::Private> privateKey = v8::Private::ForApi(v8::Isolate::GetCurrent(), SWIGV8_STRING_NEW("__swig__packed_data__"));
   obj->SetPrivate(SWIGV8_CURRENT_CONTEXT(), privateKey, SWIGV8_BOOLEAN_NEW(true));
-#endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031511)
-  obj->SetPointerInInternalField(0, cdata);
-#else
   obj->SetAlignedPointerInInternalField(0, cdata);
-#endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-  cdata->handle = v8::Persistent<v8::Object>::New(obj);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-  cdata->handle = v8::Persistent<v8::Object>::New(v8::Isolate::GetCurrent(), obj);
-#else
   cdata->handle.Reset(v8::Isolate::GetCurrent(), obj);
-#endif
 
-
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-  cdata->handle.MakeWeak(cdata, _wrap_SwigV8PackedData_delete);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031918)
-  cdata->handle.MakeWeak(v8::Isolate::GetCurrent(), cdata, _wrap_SwigV8PackedData_delete);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-  cdata->handle.MakeWeak(cdata, _wrap_SwigV8PackedData_delete);
-#elif (V8_MAJOR_VERSION-0) < 5
-  cdata->handle.SetWeak(cdata, _wrap_SwigV8PackedData_delete);
-//  v8::V8::SetWeak(&cdata->handle, cdata, _wrap_SwigV8PackedData_delete);
-#else
   cdata->handle.SetWeak(cdata, _wrap_SwigV8PackedData_delete, v8::WeakCallbackType::kParameter);
-#endif
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-  cdata->handle.MarkIndependent();
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032100)
-  cdata->handle.MarkIndependent(v8::Isolate::GetCurrent());
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
   cdata->handle.MarkIndependent();
 // Looks like future versions do not require that anymore:
 // https://monorail-prod.appspot.com/p/chromium/issues/detail?id=923361#c11
@@ -1484,9 +1236,9 @@ SWIGV8_VALUE SWIGV8_AppendOutput(SWIGV8_VALUE result, SWIGV8_VALUE obj) {
   SWIGV8_HANDLESCOPE_ESC();
   
   if (result->IsUndefined()) {
-    result = SWIGV8_ARRAY_NEW();
+    result = SWIGV8_ARRAY_NEW(0);
   } else if (!result->IsArray()) {
-    SWIGV8_ARRAY tmparr = SWIGV8_ARRAY_NEW();
+    SWIGV8_ARRAY tmparr = SWIGV8_ARRAY_NEW(0);
     SWIGV8_ARRAY_SET(tmparr, 0, result);
     result = tmparr;
   }
@@ -1498,23 +1250,10 @@ SWIGV8_VALUE SWIGV8_AppendOutput(SWIGV8_VALUE result, SWIGV8_VALUE obj) {
 
 
 
-// Note: since 3.19 there are new CallBack types, since 03.21.9 the old ones have been removed
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-typedef v8::InvocationCallback  SwigV8FunctionCallback;
-typedef v8::AccessorGetter      SwigV8AccessorGetterCallback;
-typedef v8::AccessorSetter      SwigV8AccessorSetterCallback;
-typedef v8::AccessorInfo        SwigV8PropertyCallbackInfoVoid;
-#elif (V8_MAJOR_VERSION-0) < 5
-typedef v8::FunctionCallback            SwigV8FunctionCallback;
-typedef v8::AccessorGetterCallback      SwigV8AccessorGetterCallback;
-typedef v8::AccessorSetterCallback      SwigV8AccessorSetterCallback;
-typedef v8::PropertyCallbackInfo<void>  SwigV8PropertyCallbackInfoVoid;
-#else
 typedef v8::FunctionCallback            SwigV8FunctionCallback;
 typedef v8::AccessorNameGetterCallback  SwigV8AccessorGetterCallback;
 typedef v8::AccessorNameSetterCallback  SwigV8AccessorSetterCallback;
 typedef v8::PropertyCallbackInfo<void>  SwigV8PropertyCallbackInfoVoid;
-#endif
 
 /**
  * Creates a class template for a class with specified initialization function.
@@ -1559,40 +1298,25 @@ SWIGRUNTIME void SWIGV8_AddMemberVariable(SWIGV8_FUNCTION_TEMPLATE class_templ, 
  * Registers a class method with given name for a given object.
  */
 SWIGRUNTIME void SWIGV8_AddStaticFunction(SWIGV8_OBJECT obj, const char* symbol,
-  const SwigV8FunctionCallback& _func) {
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903) || (SWIG_V8_VERSION < 0x0704)
-  obj->Set(SWIGV8_SYMBOL_NEW(symbol), SWIGV8_FUNCTEMPLATE_NEW(_func)->GetFunction());
-#else
-  SWIGV8_MAYBE_CHECK(obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW(symbol), SWIGV8_FUNCTEMPLATE_NEW(_func)->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked()));
-#endif
+  const SwigV8FunctionCallback& _func, v8::Local<v8::Context> context) {
+  SWIGV8_MAYBE_CHECK(obj->Set(context, SWIGV8_SYMBOL_NEW(symbol), SWIGV8_FUNCTEMPLATE_NEW(_func)->GetFunction(context).ToLocalChecked()));
 }
 
 /**
  * Registers a class method with given name for a given object.
  */
 SWIGRUNTIME void SWIGV8_AddStaticVariable(SWIGV8_OBJECT obj, const char* symbol,
-  SwigV8AccessorGetterCallback getter, SwigV8AccessorSetterCallback setter) {
-#if (V8_MAJOR_VERSION-0) < 5
-  obj->SetAccessor(SWIGV8_SYMBOL_NEW(symbol), getter, setter);
-#else
-  SWIGV8_MAYBE_CHECK(obj->SetAccessor(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW(symbol), getter, setter));
-#endif
+  SwigV8AccessorGetterCallback getter, SwigV8AccessorSetterCallback setter,
+  v8::Local<v8::Context> context) {
+  SWIGV8_MAYBE_CHECK(obj->SetAccessor(context, SWIGV8_SYMBOL_NEW(symbol), getter, setter));
 }
 
-#if (V8_MAJOR_VERSION-0) < 5
-SWIGRUNTIME void JS_veto_set_variable(v8::Local<v8::String> property, v8::Local<v8::Value> value, const SwigV8PropertyCallbackInfoVoid& info)
-#else
 SWIGRUNTIME void JS_veto_set_variable(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const SwigV8PropertyCallbackInfoVoid& info)
-#endif
 {
     char buffer[256];
     char msg[512];
     int res;
 
-#if (V8_MAJOR_VERSION-0) < 5
-    property->WriteUtf8(buffer, 256);
-    res = sprintf(msg, "Tried to write read-only variable: %s.", buffer);
-#else
     v8::Local<v8::String> sproperty;
     if (property->ToString(SWIGV8_CURRENT_CONTEXT()).ToLocal(&sproperty)) {
       SWIGV8_WRITE_UTF8(sproperty, buffer, 256);
@@ -1601,7 +1325,6 @@ SWIGRUNTIME void JS_veto_set_variable(v8::Local<v8::Name> property, v8::Local<v8
     else {
       res = -1;
     }
-#endif
 
     if(res<0) {
       SWIG_exception(SWIG_ERROR, "Tried to write read-only variable.");
@@ -1615,21 +1338,23 @@ fail: ;
 
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_MediaFrameListener swig_types[0]
-#define SWIGTYPE_p_MediaFrameListenerBridge swig_types[1]
-#define SWIGTYPE_p_Properties swig_types[2]
-#define SWIGTYPE_p_RTPIncomingMediaStream swig_types[3]
-#define SWIGTYPE_p_RTPReceiver swig_types[4]
-#define SWIGTYPE_p_VideoCodecs swig_types[5]
-#define SWIGTYPE_p_VideoDecoderFacade swig_types[6]
-#define SWIGTYPE_p_VideoEncoderFacade swig_types[7]
-#define SWIGTYPE_p_VideoInput swig_types[8]
-#define SWIGTYPE_p_VideoOutput swig_types[9]
-#define SWIGTYPE_p_VideoPipe swig_types[10]
-#define SWIGTYPE_p_char swig_types[11]
-#define SWIGTYPE_p_v8__LocalT_v8__Value_t swig_types[12]
-static swig_type_info *swig_types[14];
-static swig_module_info swig_module = {swig_types, 13, 0, 0, 0, 0};
+#define SWIGTYPE_p_DWORD swig_types[0]
+#define SWIGTYPE_p_MediaFrameListener swig_types[1]
+#define SWIGTYPE_p_MediaFrameListenerBridge swig_types[2]
+#define SWIGTYPE_p_Properties swig_types[3]
+#define SWIGTYPE_p_RTPIncomingMediaStream swig_types[4]
+#define SWIGTYPE_p_RTPReceiver swig_types[5]
+#define SWIGTYPE_p_TimeService swig_types[6]
+#define SWIGTYPE_p_VideoCodecs swig_types[7]
+#define SWIGTYPE_p_VideoDecoderFacade swig_types[8]
+#define SWIGTYPE_p_VideoEncoderFacade swig_types[9]
+#define SWIGTYPE_p_VideoInput swig_types[10]
+#define SWIGTYPE_p_VideoOutput swig_types[11]
+#define SWIGTYPE_p_VideoPipe swig_types[12]
+#define SWIGTYPE_p_char swig_types[13]
+#define SWIGTYPE_p_v8__LocalT_v8__Value_t swig_types[14]
+static swig_type_info *swig_types[16];
+static swig_module_info swig_module = {swig_types, 15, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -1824,10 +1549,6 @@ inline int SWIG_isfinite_func(T x) {
 #  define SWIG_isfinite(X) (SWIG_isfinite_func(X))
 # elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2))
 #  define SWIG_isfinite(X) (__builtin_isfinite(X))
-# elif defined(__clang__) && defined(__has_builtin)
-#  if __has_builtin(__builtin_isfinite)
-#   define SWIG_isfinite(X) (__builtin_isfinite(X))
-#  endif
 # elif defined(_MSC_VER)
 #  define SWIG_isfinite(X) (_finite(X))
 # elif defined(__sun) && defined(__SVR4)
@@ -1909,14 +1630,10 @@ SWIGINTERN int
 SWIG_AsCharPtrAndSize(SWIGV8_VALUE valRef, char** cptr, size_t* psize, int *alloc)
 {
   if(valRef->IsString()) {
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-    v8::Handle<v8::String> js_str = SWIGV8_TO_STRING(valRef);
-#else
-    v8::Local<v8::String> js_str = SWIGV8_TO_STRING(valRef);
-#endif
+    v8::Local<v8::String> js_str = v8::Local<v8::String>::Cast(valRef);
 
     size_t len = SWIGV8_UTF8_LENGTH(js_str) + 1;
-    char* cstr = new char[len];
+    char* cstr = (char*) (new char[len]());
     SWIGV8_WRITE_UTF8(js_str, cstr, len);
     
     if(alloc) *alloc = SWIG_NEWOBJ;
@@ -1926,7 +1643,7 @@ SWIG_AsCharPtrAndSize(SWIGV8_VALUE valRef, char** cptr, size_t* psize, int *allo
     return SWIG_OK;
   } else {
     if(valRef->IsObject()) {
-      SWIGV8_OBJECT obj = SWIGV8_TO_OBJECT(valRef);
+      SWIGV8_OBJECT obj = SWIGV8_OBJECT::Cast(valRef);
       // try if the object is a wrapped char[]
       swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
       if (pchar_descriptor) {
@@ -2063,6 +1780,62 @@ fail:
 }
 
 
+static SwigV8ReturnValue _wrap_RTPIncomingMediaStream_GetMediaSSRC(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  RTPIncomingMediaStream *arg1 = (RTPIncomingMediaStream *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  DWORD result;
+  
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_RTPIncomingMediaStream_GetMediaSSRC.");
+  
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_RTPIncomingMediaStream, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RTPIncomingMediaStream_GetMediaSSRC" "', argument " "1"" of type '" "RTPIncomingMediaStream *""'"); 
+  }
+  arg1 = reinterpret_cast< RTPIncomingMediaStream * >(argp1);
+  result = (arg1)->GetMediaSSRC();
+  jsresult = SWIG_NewPointerObj((new DWORD(static_cast< const DWORD& >(result))), SWIGTYPE_p_DWORD, SWIG_POINTER_OWN |  0 );
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_RTPIncomingMediaStream_GetTimeService(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  RTPIncomingMediaStream *arg1 = (RTPIncomingMediaStream *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  TimeService *result = 0 ;
+  
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_RTPIncomingMediaStream_GetTimeService.");
+  
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_RTPIncomingMediaStream, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "RTPIncomingMediaStream_GetTimeService" "', argument " "1"" of type '" "RTPIncomingMediaStream *""'"); 
+  }
+  arg1 = reinterpret_cast< RTPIncomingMediaStream * >(argp1);
+  result = (TimeService *) &(arg1)->GetTimeService();
+  jsresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_TimeService, 0 |  0 );
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
 static SwigV8ReturnValue _wrap_new_veto_RTPIncomingMediaStream(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
@@ -2175,41 +1948,15 @@ fail:
 }
 
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-static void _wrap_delete_VideoPipe(v8::Persistent<v8::Value> object, void *parameter) {
-  SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-  static void _wrap_delete_VideoPipe(v8::Isolate *isolate, v8::Persistent<v8::Value> object, void *parameter) {
-    SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-    static void _wrap_delete_VideoPipe(v8::Isolate *isolate, v8::Persistent< v8::Object> *object, SWIGV8_Proxy *proxy) {
-#elif (V8_MAJOR_VERSION-0) < 5
-      static void _wrap_delete_VideoPipe(const v8::WeakCallbackData<v8::Object, SWIGV8_Proxy> &data) {
-        v8::Local<v8::Object> object = data.GetValue();
-        SWIGV8_Proxy *proxy = data.GetParameter();
-#else
-        static void _wrap_delete_VideoPipe(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
-          SWIGV8_Proxy *proxy = data.GetParameter();
-#endif
-          
-          if(proxy->swigCMemOwn && proxy->swigCObject) {
-            VideoPipe * arg1 = (VideoPipe *)proxy->swigCObject;
-            delete arg1;
-          }
-          delete proxy;
-          
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-          object.Dispose();
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-          object.Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032100)
-          object->Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-          object->Dispose();
-#elif (V8_MAJOR_VERSION-0) < 5
-          object.Clear();
-#endif
-        }
+static void _wrap_delete_VideoPipe(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
+  SWIGV8_Proxy *proxy = data.GetParameter();
+  
+  if(proxy->swigCMemOwn && proxy->swigCObject) {
+    VideoPipe * arg1 = (VideoPipe *)proxy->swigCObject;
+    delete arg1;
+  }
+  delete proxy;
+}
 
 
 static SwigV8ReturnValue _wrap_new_MediaFrameListenerBridge(const SwigV8Arguments &args) {
@@ -2241,41 +1988,15 @@ fail:
 }
 
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-static void _wrap_delete_MediaFrameListenerBridge(v8::Persistent<v8::Value> object, void *parameter) {
-  SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-  static void _wrap_delete_MediaFrameListenerBridge(v8::Isolate *isolate, v8::Persistent<v8::Value> object, void *parameter) {
-    SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-    static void _wrap_delete_MediaFrameListenerBridge(v8::Isolate *isolate, v8::Persistent< v8::Object> *object, SWIGV8_Proxy *proxy) {
-#elif (V8_MAJOR_VERSION-0) < 5
-      static void _wrap_delete_MediaFrameListenerBridge(const v8::WeakCallbackData<v8::Object, SWIGV8_Proxy> &data) {
-        v8::Local<v8::Object> object = data.GetValue();
-        SWIGV8_Proxy *proxy = data.GetParameter();
-#else
-        static void _wrap_delete_MediaFrameListenerBridge(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
-          SWIGV8_Proxy *proxy = data.GetParameter();
-#endif
-          
-          if(proxy->swigCMemOwn && proxy->swigCObject) {
-            MediaFrameListenerBridge * arg1 = (MediaFrameListenerBridge *)proxy->swigCObject;
-            delete arg1;
-          }
-          delete proxy;
-          
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-          object.Dispose();
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-          object.Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032100)
-          object->Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-          object->Dispose();
-#elif (V8_MAJOR_VERSION-0) < 5
-          object.Clear();
-#endif
-        }
+static void _wrap_delete_MediaFrameListenerBridge(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
+  SWIGV8_Proxy *proxy = data.GetParameter();
+  
+  if(proxy->swigCMemOwn && proxy->swigCObject) {
+    MediaFrameListenerBridge * arg1 = (MediaFrameListenerBridge *)proxy->swigCObject;
+    delete arg1;
+  }
+  delete proxy;
+}
 
 
 static SwigV8ReturnValue _wrap_Properties_SetProperty__SWIG_0(const SwigV8Arguments &args, V8ErrorHandler &SWIGV8_ErrorHandler)
@@ -2423,49 +2144,28 @@ static SwigV8ReturnValue _wrap_Properties__wrap_Properties_SetProperty(const Swi
   
   if(args.Length() == 2) {
     errorHandler.err.Clear();
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-    jsresult = _wrap_Properties_SetProperty__SWIG_0(args, errorHandler);
-    if(errorHandler.err.IsEmpty()) {
-      SWIGV8_ESCAPE(jsresult);
-    }
-#else
     _wrap_Properties_SetProperty__SWIG_0(args, errorHandler);
     if(errorHandler.err.IsEmpty()) {
       return;
     }
-#endif
   }
   
   
   if(args.Length() == 2) {
     errorHandler.err.Clear();
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-    jsresult = _wrap_Properties_SetProperty__SWIG_1(args, errorHandler);
-    if(errorHandler.err.IsEmpty()) {
-      SWIGV8_ESCAPE(jsresult);
-    }
-#else
     _wrap_Properties_SetProperty__SWIG_1(args, errorHandler);
     if(errorHandler.err.IsEmpty()) {
       return;
     }
-#endif
   }
   
   
   if(args.Length() == 2) {
     errorHandler.err.Clear();
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-    jsresult = _wrap_Properties_SetProperty__SWIG_2(args, errorHandler);
-    if(errorHandler.err.IsEmpty()) {
-      SWIGV8_ESCAPE(jsresult);
-    }
-#else
     _wrap_Properties_SetProperty__SWIG_2(args, errorHandler);
     if(errorHandler.err.IsEmpty()) {
       return;
     }
-#endif
   }
   
   
@@ -2497,41 +2197,15 @@ fail:
 }
 
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-static void _wrap_delete_Properties(v8::Persistent<v8::Value> object, void *parameter) {
-  SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-  static void _wrap_delete_Properties(v8::Isolate *isolate, v8::Persistent<v8::Value> object, void *parameter) {
-    SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-    static void _wrap_delete_Properties(v8::Isolate *isolate, v8::Persistent< v8::Object> *object, SWIGV8_Proxy *proxy) {
-#elif (V8_MAJOR_VERSION-0) < 5
-      static void _wrap_delete_Properties(const v8::WeakCallbackData<v8::Object, SWIGV8_Proxy> &data) {
-        v8::Local<v8::Object> object = data.GetValue();
-        SWIGV8_Proxy *proxy = data.GetParameter();
-#else
-        static void _wrap_delete_Properties(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
-          SWIGV8_Proxy *proxy = data.GetParameter();
-#endif
-          
-          if(proxy->swigCMemOwn && proxy->swigCObject) {
-            Properties * arg1 = (Properties *)proxy->swigCObject;
-            delete arg1;
-          }
-          delete proxy;
-          
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-          object.Dispose();
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-          object.Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032100)
-          object->Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-          object->Dispose();
-#elif (V8_MAJOR_VERSION-0) < 5
-          object.Clear();
-#endif
-        }
+static void _wrap_delete_Properties(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
+  SWIGV8_Proxy *proxy = data.GetParameter();
+  
+  if(proxy->swigCMemOwn && proxy->swigCObject) {
+    Properties * arg1 = (Properties *)proxy->swigCObject;
+    delete arg1;
+  }
+  delete proxy;
+}
 
 
 static SwigV8ReturnValue _wrap_new_veto_RTPReceiver(const SwigV8Arguments &args) {
@@ -2882,41 +2556,15 @@ fail:
 }
 
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-static void _wrap_delete_VideoEncoderFacade(v8::Persistent<v8::Value> object, void *parameter) {
-  SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-  static void _wrap_delete_VideoEncoderFacade(v8::Isolate *isolate, v8::Persistent<v8::Value> object, void *parameter) {
-    SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-    static void _wrap_delete_VideoEncoderFacade(v8::Isolate *isolate, v8::Persistent< v8::Object> *object, SWIGV8_Proxy *proxy) {
-#elif (V8_MAJOR_VERSION-0) < 5
-      static void _wrap_delete_VideoEncoderFacade(const v8::WeakCallbackData<v8::Object, SWIGV8_Proxy> &data) {
-        v8::Local<v8::Object> object = data.GetValue();
-        SWIGV8_Proxy *proxy = data.GetParameter();
-#else
-        static void _wrap_delete_VideoEncoderFacade(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
-          SWIGV8_Proxy *proxy = data.GetParameter();
-#endif
-          
-          if(proxy->swigCMemOwn && proxy->swigCObject) {
-            VideoEncoderFacade * arg1 = (VideoEncoderFacade *)proxy->swigCObject;
-            delete arg1;
-          }
-          delete proxy;
-          
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-          object.Dispose();
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-          object.Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032100)
-          object->Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-          object->Dispose();
-#elif (V8_MAJOR_VERSION-0) < 5
-          object.Clear();
-#endif
-        }
+static void _wrap_delete_VideoEncoderFacade(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
+  SWIGV8_Proxy *proxy = data.GetParameter();
+  
+  if(proxy->swigCMemOwn && proxy->swigCObject) {
+    VideoEncoderFacade * arg1 = (VideoEncoderFacade *)proxy->swigCObject;
+    delete arg1;
+  }
+  delete proxy;
+}
 
 
 static SwigV8ReturnValue _wrap_VideoDecoderFacade_Start(const SwigV8Arguments &args) {
@@ -3104,41 +2752,15 @@ fail:
 }
 
 
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-static void _wrap_delete_VideoDecoderFacade(v8::Persistent<v8::Value> object, void *parameter) {
-  SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-  static void _wrap_delete_VideoDecoderFacade(v8::Isolate *isolate, v8::Persistent<v8::Value> object, void *parameter) {
-    SWIGV8_Proxy *proxy = static_cast<SWIGV8_Proxy *>(parameter);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-    static void _wrap_delete_VideoDecoderFacade(v8::Isolate *isolate, v8::Persistent< v8::Object> *object, SWIGV8_Proxy *proxy) {
-#elif (V8_MAJOR_VERSION-0) < 5
-      static void _wrap_delete_VideoDecoderFacade(const v8::WeakCallbackData<v8::Object, SWIGV8_Proxy> &data) {
-        v8::Local<v8::Object> object = data.GetValue();
-        SWIGV8_Proxy *proxy = data.GetParameter();
-#else
-        static void _wrap_delete_VideoDecoderFacade(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
-          SWIGV8_Proxy *proxy = data.GetParameter();
-#endif
-          
-          if(proxy->swigCMemOwn && proxy->swigCObject) {
-            VideoDecoderFacade * arg1 = (VideoDecoderFacade *)proxy->swigCObject;
-            delete arg1;
-          }
-          delete proxy;
-          
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031710)
-          object.Dispose();
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031900)
-          object.Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x032100)
-          object->Dispose(isolate);
-#elif (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < SWIGV8_SETWEAK_VERSION)
-          object->Dispose();
-#elif (V8_MAJOR_VERSION-0) < 5
-          object.Clear();
-#endif
-        }
+static void _wrap_delete_VideoDecoderFacade(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
+  SWIGV8_Proxy *proxy = data.GetParameter();
+  
+  if(proxy->swigCMemOwn && proxy->swigCObject) {
+    VideoDecoderFacade * arg1 = (VideoDecoderFacade *)proxy->swigCObject;
+    delete arg1;
+  }
+  delete proxy;
+}
 
 
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
@@ -3158,11 +2780,13 @@ static void *_p_MediaFrameListenerBridgeTo_p_MediaFrameListener(void *x, int *SW
 static void *_p_VideoEncoderFacadeTo_p_RTPReceiver(void *x, int *SWIGUNUSEDPARM(newmemory)) {
     return (void *)((RTPReceiver *)  ((VideoEncoderFacade *) x));
 }
+static swig_type_info _swigt__p_DWORD = {"_p_DWORD", "DWORD *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_MediaFrameListener = {"_p_MediaFrameListener", "p_MediaFrameListener|MediaFrameListener *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_MediaFrameListenerBridge = {"_p_MediaFrameListenerBridge", "p_MediaFrameListenerBridge", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_Properties = {"_p_Properties", "Properties *|p_Properties", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_RTPIncomingMediaStream = {"_p_RTPIncomingMediaStream", "p_RTPIncomingMediaStream|RTPIncomingMediaStream *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_RTPReceiver = {"_p_RTPReceiver", "RTPReceiver *|p_RTPReceiver", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_TimeService = {"_p_TimeService", "TimeService *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoCodecs = {"_p_VideoCodecs", "p_VideoCodecs", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoDecoderFacade = {"_p_VideoDecoderFacade", "p_VideoDecoderFacade|VideoDecoderFacade *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoEncoderFacade = {"_p_VideoEncoderFacade", "p_VideoEncoderFacade|VideoEncoderFacade *", 0, 0, (void*)0, 0};
@@ -3173,11 +2797,13 @@ static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_v8__LocalT_v8__Value_t = {"_p_v8__LocalT_v8__Value_t", "v8::Local< v8::Value > *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
+  &_swigt__p_DWORD,
   &_swigt__p_MediaFrameListener,
   &_swigt__p_MediaFrameListenerBridge,
   &_swigt__p_Properties,
   &_swigt__p_RTPIncomingMediaStream,
   &_swigt__p_RTPReceiver,
+  &_swigt__p_TimeService,
   &_swigt__p_VideoCodecs,
   &_swigt__p_VideoDecoderFacade,
   &_swigt__p_VideoEncoderFacade,
@@ -3188,11 +2814,13 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_v8__LocalT_v8__Value_t,
 };
 
+static swig_cast_info _swigc__p_DWORD[] = {  {&_swigt__p_DWORD, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_MediaFrameListener[] = {  {&_swigt__p_MediaFrameListener, 0, 0, 0},  {&_swigt__p_MediaFrameListenerBridge, _p_MediaFrameListenerBridgeTo_p_MediaFrameListener, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_MediaFrameListenerBridge[] = {  {&_swigt__p_MediaFrameListenerBridge, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_Properties[] = {  {&_swigt__p_Properties, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_RTPIncomingMediaStream[] = {  {&_swigt__p_RTPIncomingMediaStream, 0, 0, 0},  {&_swigt__p_MediaFrameListenerBridge, _p_MediaFrameListenerBridgeTo_p_RTPIncomingMediaStream, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_RTPReceiver[] = {  {&_swigt__p_RTPReceiver, 0, 0, 0},  {&_swigt__p_VideoEncoderFacade, _p_VideoEncoderFacadeTo_p_RTPReceiver, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_TimeService[] = {  {&_swigt__p_TimeService, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoCodecs[] = {  {&_swigt__p_VideoCodecs, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoDecoderFacade[] = {  {&_swigt__p_VideoDecoderFacade, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoEncoderFacade[] = {  {&_swigt__p_VideoEncoderFacade, 0, 0, 0},{0, 0, 0, 0}};
@@ -3203,11 +2831,13 @@ static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0,
 static swig_cast_info _swigc__p_v8__LocalT_v8__Value_t[] = {  {&_swigt__p_v8__LocalT_v8__Value_t, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
+  _swigc__p_DWORD,
   _swigc__p_MediaFrameListener,
   _swigc__p_MediaFrameListenerBridge,
   _swigc__p_Properties,
   _swigc__p_RTPIncomingMediaStream,
   _swigc__p_RTPReceiver,
+  _swigc__p_TimeService,
   _swigc__p_VideoCodecs,
   _swigc__p_VideoDecoderFacade,
   _swigc__p_VideoEncoderFacade,
@@ -3225,29 +2855,21 @@ static swig_cast_info *swig_cast_initial[] = {
 
 
 SWIGRUNTIME void
-SWIG_V8_SetModule(void *, swig_module_info *swig_module) {
-  v8::Local<v8::Object> global_obj = SWIGV8_CURRENT_CONTEXT()->Global();
+SWIG_V8_SetModule(v8::Local<v8::Context> context, swig_module_info *swig_module) {
+  v8::Local<v8::Object> global_obj = context->Global();
   v8::Local<v8::External> mod = SWIGV8_EXTERNAL_NEW(swig_module);
   assert(!mod.IsEmpty());
-#if (V8_MAJOR_VERSION-0) < 5
-  global_obj->SetHiddenValue(SWIGV8_STRING_NEW("swig_module_info_data"), mod);
-#else
   v8::Local<v8::Private> privateKey = v8::Private::ForApi(v8::Isolate::GetCurrent(), SWIGV8_STRING_NEW("swig_module_info_data"));
-  global_obj->SetPrivate(SWIGV8_CURRENT_CONTEXT(), privateKey, mod);
-#endif
+  global_obj->SetPrivate(context, privateKey, mod);
 }
 
 SWIGRUNTIME swig_module_info *
-SWIG_V8_GetModule(void *) {
-  v8::Local<v8::Object> global_obj = SWIGV8_CURRENT_CONTEXT()->Global();
-#if (V8_MAJOR_VERSION-0) < 5
-  v8::Local<v8::Value> moduleinfo = global_obj->GetHiddenValue(SWIGV8_STRING_NEW("swig_module_info_data"));
-#else
+SWIG_V8_GetModule(v8::Local<v8::Context> context) {
+  v8::Local<v8::Object> global_obj = context->Global();
   v8::Local<v8::Private> privateKey = v8::Private::ForApi(v8::Isolate::GetCurrent(), SWIGV8_STRING_NEW("swig_module_info_data"));
   v8::Local<v8::Value> moduleinfo;
-  if (!global_obj->GetPrivate(SWIGV8_CURRENT_CONTEXT(), privateKey).ToLocal(&moduleinfo))
+  if (!global_obj->GetPrivate(context, privateKey).ToLocal(&moduleinfo))
     return 0;
-#endif
 
   if (moduleinfo.IsEmpty() || moduleinfo->IsNull() || moduleinfo->IsUndefined())
   {
@@ -3272,6 +2894,7 @@ SWIG_V8_GetModule(void *) {
 
 #define SWIG_GetModule(clientdata)                SWIG_V8_GetModule(clientdata)
 #define SWIG_SetModule(clientdata, pointer)       SWIG_V8_SetModule(clientdata, pointer)
+#define SWIG_INIT_CLIENT_DATA_TYPE                v8::Local<v8::Context>
 
 
 /* -----------------------------------------------------------------------------
@@ -3326,9 +2949,12 @@ extern "C" {
 #define SWIGRUNTIME_DEBUG
 #endif
 
+#ifndef SWIG_INIT_CLIENT_DATA_TYPE
+#define SWIG_INIT_CLIENT_DATA_TYPE void *
+#endif
 
 SWIGRUNTIME void
-SWIG_InitializeModule(void *clientdata) {
+SWIG_InitializeModule(SWIG_INIT_CLIENT_DATA_TYPE clientdata) {
   size_t i;
   swig_module_info *module_head, *iter;
   int init;
@@ -3506,20 +3132,20 @@ SWIG_PropagateClientData(void) {
 #endif
 
 
+#if !defined(NODE_MODULE_VERSION) || (NODE_MODULE_VERSION < 12)
 // Note: 'extern "C"'' disables name mangling which makes it easier to load the symbol manually
-// TODO: is it ok to do that?
-extern "C"
-#if (NODE_MODULE_VERSION < 0x000C)
-void SWIGV8_INIT (SWIGV8_OBJECT exports)
+extern "C" void SWIGV8_INIT (SWIGV8_OBJECT exports_obj)
+#elif (NODE_MODULE_VERSION < 64)
+void SWIGV8_INIT (SWIGV8_OBJECT exports_obj, SWIGV8_VALUE /*module*/, void*)
 #else
-void SWIGV8_INIT (SWIGV8_OBJECT exports, SWIGV8_OBJECT /*module*/)
+void SWIGV8_INIT (SWIGV8_OBJECT exports_obj, SWIGV8_VALUE /*module*/, v8::Local<v8::Context> context, void*)
 #endif
 {
-  SWIG_InitializeModule(static_cast<void *>(&exports));
+#if !defined(NODE_MODULE_VERSION) || NODE_MODULE_VERSION < 64
+  v8::Local<v8::Context> context = SWIGV8_CURRENT_CONTEXT();
+#endif
 
-  SWIGV8_HANDLESCOPE();
-  
-  SWIGV8_OBJECT exports_obj = exports;
+  SWIG_InitializeModule(context);
 
 
   // a class template for creating proxies of undefined types
@@ -3609,7 +3235,9 @@ if (SWIGTYPE_p_VideoDecoderFacade->clientdata == 0) {
 
 
   /* register wrapper functions */
-  SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "Init", _wrap_VideoPipe_Init);
+  SWIGV8_AddMemberFunction(_exports_RTPIncomingMediaStream_class, "GetMediaSSRC", _wrap_RTPIncomingMediaStream_GetMediaSSRC);
+SWIGV8_AddMemberFunction(_exports_RTPIncomingMediaStream_class, "GetTimeService", _wrap_RTPIncomingMediaStream_GetTimeService);
+SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "Init", _wrap_VideoPipe_Init);
 SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "End", _wrap_VideoPipe_End);
 SWIGV8_AddMemberFunction(_exports_Properties_class, "SetProperty", _wrap_Properties__wrap_Properties_SetProperty);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "Init", _wrap_VideoEncoderFacade_Init);
@@ -3630,15 +3258,11 @@ SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "Stop", _wrap_VideoD
   /* setup inheritances */
   if (SWIGTYPE_p_VideoInput->clientdata && !(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_VideoInput->clientdata)->class_templ.IsEmpty()))
 {
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-  _exports_VideoPipe_class->Inherit(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_VideoInput->clientdata)->class_templ);
-#else
   _exports_VideoPipe_class->Inherit(
     v8::Local<v8::FunctionTemplate>::New(
       v8::Isolate::GetCurrent(),
       static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_VideoInput->clientdata)->class_templ)
     );
-#endif
   
 #ifdef SWIGRUNTIME_DEBUG
   printf("Inheritance successful _exports_VideoPipe _VideoInput\n");
@@ -3650,15 +3274,11 @@ SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "Stop", _wrap_VideoD
 }
 if (SWIGTYPE_p_MediaFrameListener->clientdata && !(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_MediaFrameListener->clientdata)->class_templ.IsEmpty()))
 {
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-  _exports_MediaFrameListenerBridge_class->Inherit(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_MediaFrameListener->clientdata)->class_templ);
-#else
   _exports_MediaFrameListenerBridge_class->Inherit(
     v8::Local<v8::FunctionTemplate>::New(
       v8::Isolate::GetCurrent(),
       static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_MediaFrameListener->clientdata)->class_templ)
     );
-#endif
   
 #ifdef SWIGRUNTIME_DEBUG
   printf("Inheritance successful _exports_MediaFrameListenerBridge _MediaFrameListener\n");
@@ -3670,15 +3290,11 @@ if (SWIGTYPE_p_MediaFrameListener->clientdata && !(static_cast<SWIGV8_ClientData
 }
 if (SWIGTYPE_p_RTPReceiver->clientdata && !(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_RTPReceiver->clientdata)->class_templ.IsEmpty()))
 {
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-  _exports_VideoEncoderFacade_class->Inherit(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_RTPReceiver->clientdata)->class_templ);
-#else
   _exports_VideoEncoderFacade_class->Inherit(
     v8::Local<v8::FunctionTemplate>::New(
       v8::Isolate::GetCurrent(),
       static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_RTPReceiver->clientdata)->class_templ)
     );
-#endif
   
 #ifdef SWIGRUNTIME_DEBUG
   printf("Inheritance successful _exports_VideoEncoderFacade _RTPReceiver\n");
@@ -3695,207 +3311,130 @@ if (SWIGTYPE_p_RTPReceiver->clientdata && !(static_cast<SWIGV8_ClientData *>(SWI
 SWIGV8_FUNCTION_TEMPLATE _exports_VideoCodecs_class_0 = SWIGV8_CreateClassTemplate("VideoCodecs");
 _exports_VideoCodecs_class_0->SetCallHandler(_wrap_new_veto_VideoCodecs);
 _exports_VideoCodecs_class_0->Inherit(_exports_VideoCodecs_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_VideoCodecs_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_VideoCodecs_obj = _exports_VideoCodecs_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_VideoCodecs_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_VideoCodecs_obj = _exports_VideoCodecs_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_VideoCodecs_obj = _exports_VideoCodecs_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_VideoCodecs_obj = _exports_VideoCodecs_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: MediaFrameListener (_exports_MediaFrameListener) */
 SWIGV8_FUNCTION_TEMPLATE _exports_MediaFrameListener_class_0 = SWIGV8_CreateClassTemplate("MediaFrameListener");
 _exports_MediaFrameListener_class_0->SetCallHandler(_wrap_new_veto_MediaFrameListener);
 _exports_MediaFrameListener_class_0->Inherit(_exports_MediaFrameListener_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_MediaFrameListener_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_MediaFrameListener_obj = _exports_MediaFrameListener_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_MediaFrameListener_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_MediaFrameListener_obj = _exports_MediaFrameListener_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_MediaFrameListener_obj = _exports_MediaFrameListener_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_MediaFrameListener_obj = _exports_MediaFrameListener_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: RTPIncomingMediaStream (_exports_RTPIncomingMediaStream) */
 SWIGV8_FUNCTION_TEMPLATE _exports_RTPIncomingMediaStream_class_0 = SWIGV8_CreateClassTemplate("RTPIncomingMediaStream");
 _exports_RTPIncomingMediaStream_class_0->SetCallHandler(_wrap_new_veto_RTPIncomingMediaStream);
 _exports_RTPIncomingMediaStream_class_0->Inherit(_exports_RTPIncomingMediaStream_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_RTPIncomingMediaStream_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_RTPIncomingMediaStream_obj = _exports_RTPIncomingMediaStream_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_RTPIncomingMediaStream_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_RTPIncomingMediaStream_obj = _exports_RTPIncomingMediaStream_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_RTPIncomingMediaStream_obj = _exports_RTPIncomingMediaStream_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_RTPIncomingMediaStream_obj = _exports_RTPIncomingMediaStream_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: VideoInput (_exports_VideoInput) */
 SWIGV8_FUNCTION_TEMPLATE _exports_VideoInput_class_0 = SWIGV8_CreateClassTemplate("VideoInput");
 _exports_VideoInput_class_0->SetCallHandler(_wrap_new_veto_VideoInput);
 _exports_VideoInput_class_0->Inherit(_exports_VideoInput_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_VideoInput_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_VideoInput_obj = _exports_VideoInput_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_VideoInput_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_VideoInput_obj = _exports_VideoInput_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_VideoInput_obj = _exports_VideoInput_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_VideoInput_obj = _exports_VideoInput_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: VideoOutput (_exports_VideoOutput) */
 SWIGV8_FUNCTION_TEMPLATE _exports_VideoOutput_class_0 = SWIGV8_CreateClassTemplate("VideoOutput");
 _exports_VideoOutput_class_0->SetCallHandler(_wrap_new_veto_VideoOutput);
 _exports_VideoOutput_class_0->Inherit(_exports_VideoOutput_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_VideoOutput_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_VideoOutput_obj = _exports_VideoOutput_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_VideoOutput_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_VideoOutput_obj = _exports_VideoOutput_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_VideoOutput_obj = _exports_VideoOutput_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_VideoOutput_obj = _exports_VideoOutput_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: VideoPipe (_exports_VideoPipe) */
 SWIGV8_FUNCTION_TEMPLATE _exports_VideoPipe_class_0 = SWIGV8_CreateClassTemplate("VideoPipe");
 _exports_VideoPipe_class_0->SetCallHandler(_wrap_new_VideoPipe);
 _exports_VideoPipe_class_0->Inherit(_exports_VideoPipe_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_VideoPipe_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_VideoPipe_obj = _exports_VideoPipe_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_VideoPipe_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_VideoPipe_obj = _exports_VideoPipe_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_VideoPipe_obj = _exports_VideoPipe_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_VideoPipe_obj = _exports_VideoPipe_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: MediaFrameListenerBridge (_exports_MediaFrameListenerBridge) */
 SWIGV8_FUNCTION_TEMPLATE _exports_MediaFrameListenerBridge_class_0 = SWIGV8_CreateClassTemplate("MediaFrameListenerBridge");
 _exports_MediaFrameListenerBridge_class_0->SetCallHandler(_wrap_new_MediaFrameListenerBridge);
 _exports_MediaFrameListenerBridge_class_0->Inherit(_exports_MediaFrameListenerBridge_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_MediaFrameListenerBridge_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_MediaFrameListenerBridge_obj = _exports_MediaFrameListenerBridge_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_MediaFrameListenerBridge_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_MediaFrameListenerBridge_obj = _exports_MediaFrameListenerBridge_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_MediaFrameListenerBridge_obj = _exports_MediaFrameListenerBridge_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_MediaFrameListenerBridge_obj = _exports_MediaFrameListenerBridge_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: Properties (_exports_Properties) */
 SWIGV8_FUNCTION_TEMPLATE _exports_Properties_class_0 = SWIGV8_CreateClassTemplate("Properties");
 _exports_Properties_class_0->SetCallHandler(_wrap_new_Properties);
 _exports_Properties_class_0->Inherit(_exports_Properties_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_Properties_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_Properties_obj = _exports_Properties_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_Properties_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_Properties_obj = _exports_Properties_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_Properties_obj = _exports_Properties_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_Properties_obj = _exports_Properties_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: RTPReceiver (_exports_RTPReceiver) */
 SWIGV8_FUNCTION_TEMPLATE _exports_RTPReceiver_class_0 = SWIGV8_CreateClassTemplate("RTPReceiver");
 _exports_RTPReceiver_class_0->SetCallHandler(_wrap_new_veto_RTPReceiver);
 _exports_RTPReceiver_class_0->Inherit(_exports_RTPReceiver_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_RTPReceiver_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_RTPReceiver_obj = _exports_RTPReceiver_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_RTPReceiver_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_RTPReceiver_obj = _exports_RTPReceiver_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_RTPReceiver_obj = _exports_RTPReceiver_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_RTPReceiver_obj = _exports_RTPReceiver_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: VideoEncoderFacade (_exports_VideoEncoderFacade) */
 SWIGV8_FUNCTION_TEMPLATE _exports_VideoEncoderFacade_class_0 = SWIGV8_CreateClassTemplate("VideoEncoderFacade");
 _exports_VideoEncoderFacade_class_0->SetCallHandler(_wrap_new_VideoEncoderFacade);
 _exports_VideoEncoderFacade_class_0->Inherit(_exports_VideoEncoderFacade_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_VideoEncoderFacade_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_VideoEncoderFacade_obj = _exports_VideoEncoderFacade_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_VideoEncoderFacade_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_VideoEncoderFacade_obj = _exports_VideoEncoderFacade_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_VideoEncoderFacade_obj = _exports_VideoEncoderFacade_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_VideoEncoderFacade_obj = _exports_VideoEncoderFacade_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: VideoDecoderFacade (_exports_VideoDecoderFacade) */
 SWIGV8_FUNCTION_TEMPLATE _exports_VideoDecoderFacade_class_0 = SWIGV8_CreateClassTemplate("VideoDecoderFacade");
 _exports_VideoDecoderFacade_class_0->SetCallHandler(_wrap_new_VideoDecoderFacade);
 _exports_VideoDecoderFacade_class_0->Inherit(_exports_VideoDecoderFacade_class);
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-_exports_VideoDecoderFacade_class_0->SetHiddenPrototype(true);
-v8::Handle<v8::Object> _exports_VideoDecoderFacade_obj = _exports_VideoDecoderFacade_class_0->GetFunction();
-#elif (SWIG_V8_VERSION < 0x0704)
+#if (SWIG_V8_VERSION < 0x0704)
 _exports_VideoDecoderFacade_class_0->SetHiddenPrototype(true);
 v8::Local<v8::Object> _exports_VideoDecoderFacade_obj = _exports_VideoDecoderFacade_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_VideoDecoderFacade_obj = _exports_VideoDecoderFacade_class_0->GetFunction(SWIGV8_CURRENT_CONTEXT()).ToLocalChecked();
+v8::Local<v8::Object> _exports_VideoDecoderFacade_obj = _exports_VideoDecoderFacade_class_0->GetFunction(context).ToLocalChecked();
 #endif
 
 
   /* add static class functions and variables */
-  SWIGV8_AddStaticFunction(_exports_VideoCodecs_obj, "Initialize", _wrap_VideoCodecs_Initialize);
+  SWIGV8_AddStaticFunction(_exports_VideoCodecs_obj, "Initialize", _wrap_VideoCodecs_Initialize, context);
 
 
   /* register classes */
-  #if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("VideoCodecs"), _exports_VideoCodecs_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("VideoCodecs"), _exports_VideoCodecs_obj));
-#endif
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("MediaFrameListener"), _exports_MediaFrameListener_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("MediaFrameListener"), _exports_MediaFrameListener_obj));
-#endif
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("RTPIncomingMediaStream"), _exports_RTPIncomingMediaStream_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("RTPIncomingMediaStream"), _exports_RTPIncomingMediaStream_obj));
-#endif
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("VideoInput"), _exports_VideoInput_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("VideoInput"), _exports_VideoInput_obj));
-#endif
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("VideoOutput"), _exports_VideoOutput_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("VideoOutput"), _exports_VideoOutput_obj));
-#endif
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("VideoPipe"), _exports_VideoPipe_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("VideoPipe"), _exports_VideoPipe_obj));
-#endif
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("MediaFrameListenerBridge"), _exports_MediaFrameListenerBridge_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("MediaFrameListenerBridge"), _exports_MediaFrameListenerBridge_obj));
-#endif
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("Properties"), _exports_Properties_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("Properties"), _exports_Properties_obj));
-#endif
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("RTPReceiver"), _exports_RTPReceiver_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("RTPReceiver"), _exports_RTPReceiver_obj));
-#endif
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("VideoEncoderFacade"), _exports_VideoEncoderFacade_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("VideoEncoderFacade"), _exports_VideoEncoderFacade_obj));
-#endif
-#if (V8_MAJOR_VERSION-0) < 4 && (SWIG_V8_VERSION < 0x031903)
-exports_obj->Set(SWIGV8_SYMBOL_NEW("VideoDecoderFacade"), _exports_VideoDecoderFacade_obj);
-#else
-SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW("VideoDecoderFacade"), _exports_VideoDecoderFacade_obj));
-#endif
+  SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoCodecs"), _exports_VideoCodecs_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("MediaFrameListener"), _exports_MediaFrameListener_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("RTPIncomingMediaStream"), _exports_RTPIncomingMediaStream_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoInput"), _exports_VideoInput_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoOutput"), _exports_VideoOutput_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoPipe"), _exports_VideoPipe_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("MediaFrameListenerBridge"), _exports_MediaFrameListenerBridge_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("Properties"), _exports_Properties_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("RTPReceiver"), _exports_RTPReceiver_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoEncoderFacade"), _exports_VideoEncoderFacade_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoDecoderFacade"), _exports_VideoDecoderFacade_obj));
 
 
   /* create and register namespace objects */
@@ -3903,5 +3442,9 @@ SWIGV8_MAYBE_CHECK(exports_obj->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_SYMBOL_NEW(
 }
 
 #if defined(BUILDING_NODE_EXTENSION)
+#if (NODE_MODULE_VERSION < 64)
 NODE_MODULE(medooze_video_codecs, medooze_video_codecs_initialize)
+#else
+NODE_MODULE_CONTEXT_AWARE(medooze_video_codecs, medooze_video_codecs_initialize)
+#endif
 #endif
