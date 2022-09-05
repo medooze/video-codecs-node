@@ -79,7 +79,6 @@ public:
 	}
 };
 	
-using MediaFrameListener =  MediaFrame::Listener;
 
 class VideoDecoderFacade : public VideoDecoderWorker
 {
@@ -140,6 +139,11 @@ public:
 		VideoEncoderWorker::SendFPU();
 		return 1;
 	}
+	virtual int Reset(DWORD ssrc)
+	{
+		VideoEncoderWorker::SendFPU();
+		return 1;
+	}
 };
 
 %}
@@ -151,9 +155,21 @@ struct VideoCodecs
 	static void Initialize();
 };
 	
+%{
+using MediaFrameListener = MediaFrame::Listener;
+%}
 %nodefaultctor MediaFrameListener;
 %nodefaultdtor MediaFrameListener;
 struct MediaFrameListener {};
+
+%{
+using RTPIncomingMediaStreamListener = RTPIncomingMediaStream::Listener;
+%}
+%nodefaultctor RTPIncomingMediaStreamListener;
+%nodefaultdtor RTPIncomingMediaStreamListener;
+struct RTPIncomingMediaStreamListener
+{
+};
 
 %nodefaultctor RTPIncomingMediaStream;
 %nodefaultdtor RTPIncomingMediaStream;
@@ -161,7 +177,19 @@ struct RTPIncomingMediaStream
 {
 	DWORD GetMediaSSRC();
 	TimeService& GetTimeService();
+
+	void AddListener(RTPIncomingMediaStreamListener* listener);
+	void RemoveListener(RTPIncomingMediaStreamListener* listener);
+	void Mute(bool muting);
 };
+
+struct MediaFrameListenerBridge : 
+	public RTPIncomingMediaStream,
+	public MediaFrameListener
+{
+	MediaFrameListenerBridge(int ssrc, bool smooth);
+};
+
 
 %nodefaultctor VideoInput;
 %nodefaultdtor VideoInput;
@@ -177,13 +205,6 @@ struct VideoPipe :
 {
 	int Init(float scaleResolutionDownBy);
 	int End();
-};
-
-struct MediaFrameListenerBridge : 
-	public MediaFrameListener,
-	public RTPIncomingMediaStream
-{
-	MediaFrameListenerBridge(int ssrc);
 };
 
 struct Properties
