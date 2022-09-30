@@ -5,6 +5,7 @@
 #include "videopipe.h"	
 #include "VideoEncoderWorker.h"
 #include "VideoDecoderWorker.h"
+#include "EventLoop.h"
 #include "MediaFrameListenerBridge.h"
 extern "C" {
 #include "libavcodec/avcodec.h"
@@ -127,6 +128,11 @@ class VideoEncoderFacade :
 	public RTPReceiver
 {
 public:
+	VideoEncoderFacade()
+	{
+		loop.Start();
+	}
+
 	int SetVideoCodec(v8::Local<v8::Value> name, int width, int height, int fps, int bitrate, int intraPeriod, const Properties *properties)
 	{
 		//Get codec
@@ -134,16 +140,22 @@ public:
 		//Set it
 		return codec!=VideoCodec::UNKNOWN ? VideoEncoderWorker::SetVideoCodec(codec, width, height, fps, bitrate, intraPeriod,  properties? *properties : Properties()) : 0;
 	}
+
 	virtual int SendPLI(DWORD ssrc)
 	{
 		VideoEncoderWorker::SendFPU();
 		return 1;
 	}
+
 	virtual int Reset(DWORD ssrc)
 	{
 		VideoEncoderWorker::SendFPU();
 		return 1;
 	}
+
+	TimeService& GetTimeService() { return loop; }
+private:
+	EventLoop loop;
 };
 
 %}
@@ -160,7 +172,9 @@ using MediaFrameListener = MediaFrame::Listener;
 %}
 %nodefaultctor MediaFrameListener;
 %nodefaultdtor MediaFrameListener;
-struct MediaFrameListener {};
+struct MediaFrameListener
+{
+};
 
 %{
 using RTPIncomingMediaStreamListener = RTPIncomingMediaStream::Listener;
@@ -183,12 +197,37 @@ struct RTPIncomingMediaStream
 	void Mute(bool muting);
 };
 
+
+%nodefaultctor MediaFrameListenerBridge;
 struct MediaFrameListenerBridge : 
 	public RTPIncomingMediaStream,
 	public MediaFrameListener
 {
-	MediaFrameListenerBridge(int ssrc, bool smooth);
+	MediaFrameListenerBridge(TimeService& timeService, int ssrc);
+
+	DWORD numFrames;
+	DWORD numPackets;
+	DWORD numFramesDelta;
+	DWORD numPacketsDelta;
+	DWORD totalBytes;
+	DWORD bitrate;
+	DWORD minWaitedTime;
+	DWORD maxWaitedTime;
+	DWORD avgWaitedTime;
+	void Update();
+	
+	void AddMediaListener(MediaFrameListener* listener);
+	void RemoveMediaListener(MediaFrameListener* listener);
+	void Stop();
 };
+//SWIG only supports single class inheritance
+MediaFrameListener* MediaFrameListenerBridgeToMediaFrameListener(MediaFrameListenerBridge* bridge);
+%{
+MediaFrameListener* MediaFrameListenerBridgeToMediaFrameListener(MediaFrameListenerBridge* bridge)
+{
+	return (MediaFrameListener*)bridge;
+}
+%}
 
 
 %nodefaultctor VideoInput;
@@ -229,6 +268,8 @@ struct VideoEncoderFacade : public RTPReceiver
 	int Stop();
 	int End();
 	int IsEncoding();
+
+	TimeService& GetTimeService();
 };
 
 struct VideoDecoderFacade
