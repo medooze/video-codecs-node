@@ -1,6 +1,6 @@
 {
   "name": "video-codecs-node",
-  "version": "1.8.18",
+  "version": "1.8.19",
   "description": "Video codecs for Media and RTMP servers",
   "main": "index.js",
   "scripts": {
