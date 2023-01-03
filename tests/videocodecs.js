@@ -7,8 +7,9 @@ function sleep(ms)
 }
 
 
-VideoCodecs.enableDebug(true);
-VideoCodecs.enableUltraDebug(true);
+VideoCodecs.enableLog(false);
+VideoCodecs.enableDebug(false);
+VideoCodecs.enableUltraDebug(false);
 
 tap.test("VideoCodecs",async function(suite){
 	
@@ -16,16 +17,16 @@ tap.test("VideoCodecs",async function(suite){
 		try {
 			//Create encoder and decoder
 			const thumbnail	= await VideoCodecs.generateThumbnail("h264", Buffer.alloc(3));
-			//Done
-			test.ok(thumbnail)
+			//Should not work
+			test.fail("Should not be able to decode frame");
 		} catch (error) {
-			//Should not get here
-			test.fail(error.message);
+			//Should fail
+			test.ok(error);
 		}
 		//Test for ok
 		test.end();
 	});
-	/*await suite.test("encoder+decoder", async function(test){
+	await suite.test("encoder+decoder", async function(test){
 		try {
 			//Create encoder and decoder
 			const videoEncoder	= VideoCodecs.createVideoEncoder("h264", {
@@ -58,7 +59,7 @@ tap.test("VideoCodecs",async function(suite){
 			//Should not get here
 			test.fail();
 		}
-	});*/
+	});
 	suite.end();
 }).then(() =>
 {
