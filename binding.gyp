@@ -52,10 +52,13 @@
 						[
 							'media-server/include',
 							'media-server/src',
+							'media-server/src/rtp',
 							'media-server/ext/crc32c/include',
 							'media-server/ext/libdatachannels/src',
 							'media-server/ext/libdatachannels/src/internal',
+							"media-server/src/jpeg",
 							"media-server/src/vp8",
+							"media-server/src/vp9",
 							"media-server/src/h264",
 						],
 						"sources": 
@@ -84,6 +87,7 @@
 							"media-server/src/h264/H264LayerSelector.cpp",
 							"media-server/src/vp8/VP8LayerSelector.cpp",
 							"media-server/src/vp9/VP9LayerSelector.cpp",	
+							"media-server/src/jpeg/JPEGEncoder.cpp"
 
 						],
   					        "conditions" : [

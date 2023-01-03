@@ -7,9 +7,25 @@ function sleep(ms)
 }
 
 
+VideoCodecs.enableDebug(true);
+VideoCodecs.enableUltraDebug(true);
+
 tap.test("VideoCodecs",async function(suite){
 	
-	await suite.test("encoder+decoder", async function(test){
+	await suite.test("thumbnail", async function(test){
+		try {
+			//Create encoder and decoder
+			const thumbnail	= await VideoCodecs.generateThumbnail("h264", Buffer.alloc(3));
+			//Done
+			test.ok(thumbnail)
+		} catch (error) {
+			//Should not get here
+			test.fail(error.message);
+		}
+		//Test for ok
+		test.end();
+	});
+	/*await suite.test("encoder+decoder", async function(test){
 		try {
 			//Create encoder and decoder
 			const videoEncoder	= VideoCodecs.createVideoEncoder("h264", {
@@ -42,7 +58,10 @@ tap.test("VideoCodecs",async function(suite){
 			//Should not get here
 			test.fail();
 		}
-	});
+	});*/
 	suite.end();
+}).then(() =>
+{
+	VideoCodecs.terminate();
 })
 

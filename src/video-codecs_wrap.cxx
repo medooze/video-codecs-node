@@ -1349,17 +1349,19 @@ fail: ;
 #define SWIGTYPE_p_RTPIncomingMediaStreamShared swig_types[8]
 #define SWIGTYPE_p_RTPReceiver swig_types[9]
 #define SWIGTYPE_p_RTPReceiverShared swig_types[10]
-#define SWIGTYPE_p_TimeService swig_types[11]
-#define SWIGTYPE_p_VideoCodecs swig_types[12]
-#define SWIGTYPE_p_VideoDecoderFacade swig_types[13]
-#define SWIGTYPE_p_VideoEncoderFacade swig_types[14]
-#define SWIGTYPE_p_VideoInput swig_types[15]
-#define SWIGTYPE_p_VideoOutput swig_types[16]
-#define SWIGTYPE_p_VideoPipe swig_types[17]
-#define SWIGTYPE_p_char swig_types[18]
-#define SWIGTYPE_p_v8__LocalT_v8__Value_t swig_types[19]
-static swig_type_info *swig_types[21];
-static swig_module_info swig_module = {swig_types, 20, 0, 0, 0, 0};
+#define SWIGTYPE_p_ThumbnailGeneratorTask swig_types[11]
+#define SWIGTYPE_p_TimeService swig_types[12]
+#define SWIGTYPE_p_VideoCodecsModule swig_types[13]
+#define SWIGTYPE_p_VideoDecoderFacade swig_types[14]
+#define SWIGTYPE_p_VideoEncoderFacade swig_types[15]
+#define SWIGTYPE_p_VideoInput swig_types[16]
+#define SWIGTYPE_p_VideoOutput swig_types[17]
+#define SWIGTYPE_p_VideoPipe swig_types[18]
+#define SWIGTYPE_p_char swig_types[19]
+#define SWIGTYPE_p_v8__LocalT_v8__Object_t swig_types[20]
+#define SWIGTYPE_p_v8__LocalT_v8__Value_t swig_types[21]
+static swig_type_info *swig_types[23];
+static swig_module_info swig_module = {swig_types, 22, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -1381,13 +1383,78 @@ static swig_module_info swig_module = {swig_types, 20, 0, 0, 0, 0};
 #include <assert.h>
 
 
-#include <nan.h>
 #include "VideoCodecFactory.h"
 #include "videopipe.h"	
 #include "VideoEncoderWorker.h"
 #include "VideoDecoderWorker.h"
 #include "EventLoop.h"
 #include "MediaFrameListenerBridge.h"
+
+#include <string>
+#include <list>
+#include <map>
+#include <functional>
+#include <memory>
+#include <nan.h>
+
+
+template<typename T>
+struct CopyablePersistentTraits {
+public:
+	typedef Nan::Persistent<T, CopyablePersistentTraits<T> > CopyablePersistent;
+	static const bool kResetInDestructor = true;
+	template<typename S, typename M>
+	static inline void Copy(const Nan::Persistent<S, M> &source, CopyablePersistent *dest) {}
+	template<typename S, typename M>
+	static inline void Copy(const v8::Persistent<S, M>&, v8::Persistent<S, CopyablePersistentTraits<S> >*){}
+};
+
+template<typename T>
+class NonCopyablePersistentTraits { 
+public:
+  typedef Nan::Persistent<T, NonCopyablePersistentTraits<T> > NonCopyablePersistent;
+  static const bool kResetInDestructor = true;
+
+  template<typename S, typename M>
+  static void Copy(const Nan::Persistent<S, M> &source, NonCopyablePersistent *dest);
+
+  template<typename O> static void Uncompilable();
+};
+
+template<typename T >
+using Persistent = Nan::Persistent<T,NonCopyablePersistentTraits<T>>;
+
+
+bool MakeCallback(const std::shared_ptr<Persistent<v8::Object>>& persistent, const char* name, int argc = 0, v8::Local<v8::Value>* argv = nullptr)
+{
+	Nan::HandleScope scope;
+	//Ensure we have an object
+	if (!persistent)
+		return false;
+	//Get a local reference
+	v8::Local<v8::Object> local = Nan::New(*persistent);
+	//Check it is not empty
+	if (local.IsEmpty())
+		return false;
+	//Get event name
+	auto method = Nan::New(name).ToLocalChecked();
+	//Get attribute 
+	auto attr = Nan::Get(local,method);
+	//Check 
+	if (attr.IsEmpty())
+		return false;
+	//Create callback function
+	auto callback = Nan::To<v8::Function>(attr.ToLocalChecked());
+	//Check 
+	if (callback.IsEmpty())
+		return false;
+	//Call object method with arguments
+	Nan::MakeCallback(local, callback.ToLocalChecked(), argc, argv);
+	
+	//Done 
+	return true;
+}
+
 
 
 SWIGINTERNINLINE
@@ -1636,8 +1703,8 @@ void log_ffmpeg(void* ptr, int level, const char* fmt, va_list vl)
 	static int print_prefix = 1;
 	char line[1024];
 
-	//if (!Logger::IsUltraDebugEnabled() && level > AV_LOG_ERROR)
-	//	return;
+	if (level > AV_LOG_ERROR)
+		return;
 
 	//Format the
 	av_log_format_line(ptr, level, fmt, vl, line, sizeof(line), &print_prefix);
@@ -1685,8 +1752,32 @@ int lock_ffmpeg(void **param, enum AVLockOp op)
 	return 0;
 }
 
-class VideoCodecs
+class VideoCodecsModule
 {
+public:
+	typedef std::list<v8::Local<v8::Value>> Arguments;
+public:
+
+	~VideoCodecsModule()
+	{
+		Terminate();
+	}
+	
+	/*
+	 * Async
+	 *  Enqueus a function to the async queue and signals main thread to execute it
+	 */
+	static void Async(std::function<void()> func) 
+	{
+		//Check if not terminatd
+		if (uv_is_active((uv_handle_t *)&async))
+		{
+			//Enqueue
+			queue.enqueue(std::move(func));
+			//Signal main thread
+			uv_async_send(&async);
+		}
+	}
 public:
 	static void Initialize()
 	{
@@ -1698,8 +1789,63 @@ public:
 
 		//Init avcodecs
 		avcodec_register_all();
+
+		//Init async handler
+		uv_async_init(uv_default_loop(), &async, async_cb_handler);
 	}
+
+	static void Terminate()
+	{
+		Log("-VideoCodecsModule::Terminate\n");
+		//Close handle
+		uv_close((uv_handle_t *)&async, NULL);
+		
+		std::function<void()> func;
+		//Dequeue all pending functions
+		while(queue.try_dequeue(func)){}
+	}
+	
+	static void EnableLog(bool flag)
+	{
+		//Enable log
+		Logger::EnableLog(flag);
+	}
+	
+	static void EnableDebug(bool flag)
+	{
+		//Enable debug
+		Logger::EnableDebug(flag);
+	}
+	
+	static void EnableUltraDebug(bool flag)
+	{
+		//Enable debug
+		Logger::EnableUltraDebug(flag);
+	}
+	
+	static void async_cb_handler(uv_async_t *handle)
+	{
+		std::function<void()> func;
+		//Get all pending functions
+		while(queue.try_dequeue(func))
+		{
+			//Execute async function
+			func();
+		}
+	}
+	
+	
+private:
+	//http://stackoverflow.com/questions/31207454/v8-multithreaded-function
+	static uv_async_t  async;
+	static moodycamel::ConcurrentQueue<std::function<void()>> queue;
 };
+
+//Static initializaion
+uv_async_t VideoCodecsModule::async;
+moodycamel::ConcurrentQueue<std::function<void()>>  VideoCodecsModule::queue;
+
+
 
 
 /* Getting isfinite working pre C99 across multiple platforms is non-trivial. Users can provide SWIG_isfinite on older platforms. */
@@ -1841,6 +1987,146 @@ private:
 
 
 
+
+
+class ThumbnailGeneratorTask
+{
+public:
+	ThumbnailGeneratorTask(v8::Local<v8::Object> promise)
+	{
+		persistent = std::make_shared<Persistent<v8::Object>>(promise);
+	}
+
+	void Run(const char* codecName, v8::Local<v8::Object> buffer)
+	{
+		//Cast to array view
+		v8::Local<v8::Uint8Array> uint8array = v8::Local<v8::Uint8Array>::Cast(buffer);
+		//Get data and size
+		//TODO: Fix this to prevent potential memory corruption by modifying buffer while running task in thread
+		const uint8_t* data = (const uint8_t*)uint8array->Buffer()->GetContents().Data();
+		const uint32_t size = uint8array->Buffer()->ByteLength();
+
+		//Get codec for 
+		VideoCodec::Type codec = VideoCodec::GetCodecForName(codecName);
+
+		//If not found
+		if (codec==VideoCodec::UNKNOWN)
+			VideoCodecsModule::Async([=,cloned=persistent](){
+				Nan::HandleScope scope;
+				int i = 0;
+				v8::Local<v8::Value> argv[1];
+				argv[i++] = Nan::New("Unknown codec").ToLocalChecked();
+				//Call method
+				MakeCallback(cloned,"reject",i,argv);
+			});
+
+		//Generate thumbanail in a different thread
+		auto thread = new std::thread([=,cloned=persistent](){
+			//Create jpeg encoder
+			Properties properties;
+			std::unique_ptr<VideoEncoder> jpeg(VideoCodecFactory::CreateEncoder(VideoCodec::JPEG,properties));
+
+			//Set
+			jpeg->SetFrameRate(1, 2000, 0);
+
+			//Check
+			if (!jpeg)
+				return VideoCodecsModule::Async([=,cloned=cloned](){
+					Nan::HandleScope scope;
+					int i = 0;
+					v8::Local<v8::Value> argv[1];
+					argv[i++] = Nan::New("Could not open JPEG encoder").ToLocalChecked();
+					//Call method
+					MakeCallback(cloned,"reject",i,argv);
+				});
+
+			//Create jpeg encoder
+			std::unique_ptr<VideoDecoder> decoder(VideoCodecFactory::CreateDecoder(codec));
+
+			//Check
+			if (!decoder)
+				return VideoCodecsModule::Async([=,cloned=cloned](){
+					Nan::HandleScope scope;
+					int i = 0;
+					v8::Local<v8::Value> argv[1];
+					argv[i++] = Nan::New("Could not open decoder").ToLocalChecked();
+					//Call method
+					MakeCallback(cloned,"reject",i,argv);
+				});
+				
+			//Decode frame
+			if(!decoder->Decode(data, size))
+				return VideoCodecsModule::Async([=,cloned=cloned](){
+					Nan::HandleScope scope;
+					int i = 0;
+					v8::Local<v8::Value> argv[1];
+					argv[i++] = Nan::New("Could not decode frame").ToLocalChecked();
+					//Call method
+					MakeCallback(cloned,"reject",i,argv);
+				});
+	
+			//Check decoded frame
+			if (!decoder->GetWidth() || !decoder->GetHeight() || !decoder->GetFrame())
+				return VideoCodecsModule::Async([=,cloned2=cloned](){
+					Nan::HandleScope scope;
+					int i = 0;
+					v8::Local<v8::Value> argv[1];
+					argv[i++] = Nan::New("Empty decoded frame").ToLocalChecked();
+					//Call method
+					MakeCallback(cloned2,"reject",i,argv);
+				});
+
+			//Set decoded size 
+			if (!jpeg->SetSize(decoder->GetWidth(),decoder->GetHeight()))
+				return VideoCodecsModule::Async([=,cloned2=cloned](){
+					Nan::HandleScope scope;
+					int i = 0;
+					v8::Local<v8::Value> argv[1];
+					argv[i++] = Nan::New("Error setting JPEG size").ToLocalChecked();
+					//Call method
+					MakeCallback(cloned2,"reject",i,argv);
+				});
+
+			//Encoder jpeb
+			auto frame = jpeg->EncodeFrame(decoder->GetFrame(), decoder->GetWidth() * decoder->GetHeight() * 4 /3);
+
+			//Check
+			if (!frame)
+				return VideoCodecsModule::Async([=,cloned=cloned](){
+					Nan::HandleScope scope;
+					int i = 0;
+					v8::Local<v8::Value> argv[1];
+					argv[i++] = Nan::New("Error encoding JPEG").ToLocalChecked();
+					//Call method
+					MakeCallback(cloned,"reject",i,argv);
+				});
+			
+			
+			//Get frame buffer
+			Buffer::shared buffer = frame->GetBuffer();
+		
+			Debug("-ThumbnailGeneratorTask::Run() Thumbnail generated [size:%d]\n",buffer->GetSize());
+
+			//Run function on main node thread
+			VideoCodecsModule::Async([=,cloned=cloned](){
+				Nan::HandleScope scope;
+				int i = 0;
+				v8::Local<v8::Value> argv[1];
+				//Create local args
+				argv[i++] = Nan::CopyBuffer(reinterpret_cast<const char*>(buffer->GetData()), buffer->GetSize()).ToLocalChecked();
+				//Call object method with arguments
+				MakeCallback(cloned, "resolve", i, argv);
+			});
+		});
+
+		thread->detach();
+	}
+private:
+	std::shared_ptr<Persistent<v8::Object>> persistent;
+};
+
+
+
 #define SWIGV8_INIT medooze_video_codecs_initialize
 
 
@@ -1855,12 +2141,13 @@ SWIGV8_ClientData _exports_RTPReceiverShared_clientData;
 SWIGV8_ClientData _exports_MediaFrameListenerBridge_clientData;
 SWIGV8_ClientData _exports_MediaFrameListenerBridgeShared_clientData;
 SWIGV8_ClientData _exports_Properties_clientData;
-SWIGV8_ClientData _exports_VideoCodecs_clientData;
+SWIGV8_ClientData _exports_VideoCodecsModule_clientData;
 SWIGV8_ClientData _exports_VideoInput_clientData;
 SWIGV8_ClientData _exports_VideoOutput_clientData;
 SWIGV8_ClientData _exports_VideoPipe_clientData;
 SWIGV8_ClientData _exports_VideoEncoderFacade_clientData;
 SWIGV8_ClientData _exports_VideoDecoderFacade_clientData;
+SWIGV8_ClientData _exports_ThumbnailGeneratorTask_clientData;
 
 
 static SwigV8ReturnValue _wrap_new_veto_TimeService(const SwigV8Arguments &args) {
@@ -3398,14 +3685,14 @@ static void _wrap_delete_Properties(const v8::WeakCallbackInfo<SWIGV8_Proxy> &da
 }
 
 
-static SwigV8ReturnValue _wrap_VideoCodecs_Initialize(const SwigV8Arguments &args) {
+static SwigV8ReturnValue _wrap_VideoCodecsModule_Initialize(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
   SWIGV8_VALUE jsresult;
   
-  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoCodecs_Initialize.");
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoCodecsModule_Initialize.");
   
-  VideoCodecs::Initialize();
+  VideoCodecsModule::Initialize();
   jsresult = SWIGV8_UNDEFINED();
   
   SWIGV8_RETURN(jsresult);
@@ -3416,10 +3703,109 @@ fail:
 }
 
 
-static SwigV8ReturnValue _wrap_new_veto_VideoCodecs(const SwigV8Arguments &args) {
+static SwigV8ReturnValue _wrap_VideoCodecsModule_Terminate(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
-  SWIG_exception(SWIG_ERROR, "Class VideoCodecs can not be instantiated");
+  SWIGV8_VALUE jsresult;
+  
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoCodecsModule_Terminate.");
+  
+  VideoCodecsModule::Terminate();
+  jsresult = SWIGV8_UNDEFINED();
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_VideoCodecsModule_EnableLog(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  bool arg1 ;
+  bool val1 ;
+  int ecode1 = 0 ;
+  
+  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoCodecsModule_EnableLog.");
+  
+  ecode1 = SWIG_AsVal_bool(args[0], &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "VideoCodecsModule_EnableLog" "', argument " "1"" of type '" "bool""'");
+  } 
+  arg1 = static_cast< bool >(val1);
+  VideoCodecsModule::EnableLog(arg1);
+  jsresult = SWIGV8_UNDEFINED();
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_VideoCodecsModule_EnableDebug(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  bool arg1 ;
+  bool val1 ;
+  int ecode1 = 0 ;
+  
+  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoCodecsModule_EnableDebug.");
+  
+  ecode1 = SWIG_AsVal_bool(args[0], &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "VideoCodecsModule_EnableDebug" "', argument " "1"" of type '" "bool""'");
+  } 
+  arg1 = static_cast< bool >(val1);
+  VideoCodecsModule::EnableDebug(arg1);
+  jsresult = SWIGV8_UNDEFINED();
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_VideoCodecsModule_EnableUltraDebug(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  bool arg1 ;
+  bool val1 ;
+  int ecode1 = 0 ;
+  
+  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoCodecsModule_EnableUltraDebug.");
+  
+  ecode1 = SWIG_AsVal_bool(args[0], &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "VideoCodecsModule_EnableUltraDebug" "', argument " "1"" of type '" "bool""'");
+  } 
+  arg1 = static_cast< bool >(val1);
+  VideoCodecsModule::EnableUltraDebug(arg1);
+  jsresult = SWIGV8_UNDEFINED();
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_new_veto_VideoCodecsModule(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIG_exception(SWIG_ERROR, "Class VideoCodecsModule can not be instantiated");
 fail:
   SWIGV8_RETURN(SWIGV8_UNDEFINED());
 }
@@ -4091,6 +4477,82 @@ static void _wrap_delete_VideoDecoderFacade(const v8::WeakCallbackInfo<SWIGV8_Pr
 }
 
 
+static SwigV8ReturnValue _wrap_new_ThumbnailGeneratorTask(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_OBJECT self = args.Holder();
+  v8::Local< v8::Object > arg1 ;
+  ThumbnailGeneratorTask *result;
+  if(self->InternalFieldCount() < 1) SWIG_exception_fail(SWIG_ERROR, "Illegal call of constructor _wrap_new_ThumbnailGeneratorTask.");
+  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_new_ThumbnailGeneratorTask.");
+  {
+    arg1 = v8::Local<v8::Object>::Cast(args[0]);
+  }
+  result = (ThumbnailGeneratorTask *)new ThumbnailGeneratorTask(arg1);
+  
+  
+  
+  SWIGV8_SetPrivateData(self, result, SWIGTYPE_p_ThumbnailGeneratorTask, SWIG_POINTER_OWN);
+  SWIGV8_RETURN(self);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_ThumbnailGeneratorTask_Run(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  ThumbnailGeneratorTask *arg1 = (ThumbnailGeneratorTask *) 0 ;
+  char *arg2 = (char *) 0 ;
+  v8::Local< v8::Object > arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  
+  if(args.Length() != 2) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_ThumbnailGeneratorTask_Run.");
+  
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_ThumbnailGeneratorTask, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ThumbnailGeneratorTask_Run" "', argument " "1"" of type '" "ThumbnailGeneratorTask *""'"); 
+  }
+  arg1 = reinterpret_cast< ThumbnailGeneratorTask * >(argp1);
+  res2 = SWIG_AsCharPtrAndSize(args[0], &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "ThumbnailGeneratorTask_Run" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = reinterpret_cast< char * >(buf2);
+  {
+    arg3 = v8::Local<v8::Object>::Cast(args[1]);
+  }
+  (arg1)->Run((char const *)arg2,arg3);
+  jsresult = SWIGV8_UNDEFINED();
+  
+  if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static void _wrap_delete_ThumbnailGeneratorTask(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
+  SWIGV8_Proxy *proxy = data.GetParameter();
+  
+  if(proxy->swigCMemOwn && proxy->swigCObject) {
+    ThumbnailGeneratorTask * arg1 = (ThumbnailGeneratorTask *)proxy->swigCObject;
+    delete arg1;
+  }
+  delete proxy;
+}
+
+
 /* -------- TYPE CONVERSION AND EQUIVALENCE RULES (BEGIN) -------- */
 
 static void *_p_EventLoopTo_p_TimeService(void *x, int *SWIGUNUSEDPARM(newmemory)) {
@@ -4125,14 +4587,16 @@ static swig_type_info _swigt__p_RTPIncomingMediaStream = {"_p_RTPIncomingMediaSt
 static swig_type_info _swigt__p_RTPIncomingMediaStreamShared = {"_p_RTPIncomingMediaStreamShared", "p_RTPIncomingMediaStreamShared|RTPIncomingMediaStreamShared *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_RTPReceiver = {"_p_RTPReceiver", "RTPReceiver *|p_RTPReceiver", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_RTPReceiverShared = {"_p_RTPReceiverShared", "p_RTPReceiverShared|RTPReceiverShared *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_ThumbnailGeneratorTask = {"_p_ThumbnailGeneratorTask", "p_ThumbnailGeneratorTask|ThumbnailGeneratorTask *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_TimeService = {"_p_TimeService", "p_TimeService|TimeService *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_VideoCodecs = {"_p_VideoCodecs", "p_VideoCodecs", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_VideoCodecsModule = {"_p_VideoCodecsModule", "p_VideoCodecsModule", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoDecoderFacade = {"_p_VideoDecoderFacade", "p_VideoDecoderFacade|VideoDecoderFacade *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoEncoderFacade = {"_p_VideoEncoderFacade", "p_VideoEncoderFacade|VideoEncoderFacade *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoInput = {"_p_VideoInput", "VideoInput *|p_VideoInput", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoOutput = {"_p_VideoOutput", "p_VideoOutput|VideoOutput *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoPipe = {"_p_VideoPipe", "VideoPipe *|p_VideoPipe", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_v8__LocalT_v8__Object_t = {"_p_v8__LocalT_v8__Object_t", "v8::Local< v8::Object > *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_v8__LocalT_v8__Value_t = {"_p_v8__LocalT_v8__Value_t", "v8::Local< v8::Value > *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
@@ -4147,14 +4611,16 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_RTPIncomingMediaStreamShared,
   &_swigt__p_RTPReceiver,
   &_swigt__p_RTPReceiverShared,
+  &_swigt__p_ThumbnailGeneratorTask,
   &_swigt__p_TimeService,
-  &_swigt__p_VideoCodecs,
+  &_swigt__p_VideoCodecsModule,
   &_swigt__p_VideoDecoderFacade,
   &_swigt__p_VideoEncoderFacade,
   &_swigt__p_VideoInput,
   &_swigt__p_VideoOutput,
   &_swigt__p_VideoPipe,
   &_swigt__p_char,
+  &_swigt__p_v8__LocalT_v8__Object_t,
   &_swigt__p_v8__LocalT_v8__Value_t,
 };
 
@@ -4169,14 +4635,16 @@ static swig_cast_info _swigc__p_RTPIncomingMediaStream[] = {  {&_swigt__p_RTPInc
 static swig_cast_info _swigc__p_RTPIncomingMediaStreamShared[] = {  {&_swigt__p_RTPIncomingMediaStreamShared, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_RTPReceiver[] = {  {&_swigt__p_RTPReceiver, 0, 0, 0},  {&_swigt__p_MediaFrameListenerBridge, _p_MediaFrameListenerBridgeTo_p_RTPReceiver, 0, 0},  {&_swigt__p_VideoEncoderFacade, _p_VideoEncoderFacadeTo_p_RTPReceiver, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_RTPReceiverShared[] = {  {&_swigt__p_RTPReceiverShared, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_ThumbnailGeneratorTask[] = {  {&_swigt__p_ThumbnailGeneratorTask, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_TimeService[] = {  {&_swigt__p_EventLoop, _p_EventLoopTo_p_TimeService, 0, 0},  {&_swigt__p_TimeService, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_VideoCodecs[] = {  {&_swigt__p_VideoCodecs, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_VideoCodecsModule[] = {  {&_swigt__p_VideoCodecsModule, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoDecoderFacade[] = {  {&_swigt__p_VideoDecoderFacade, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoEncoderFacade[] = {  {&_swigt__p_VideoEncoderFacade, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoInput[] = {  {&_swigt__p_VideoInput, 0, 0, 0},  {&_swigt__p_VideoPipe, _p_VideoPipeTo_p_VideoInput, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoOutput[] = {  {&_swigt__p_VideoOutput, 0, 0, 0},  {&_swigt__p_VideoPipe, _p_VideoPipeTo_p_VideoOutput, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoPipe[] = {  {&_swigt__p_VideoPipe, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_v8__LocalT_v8__Object_t[] = {  {&_swigt__p_v8__LocalT_v8__Object_t, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_v8__LocalT_v8__Value_t[] = {  {&_swigt__p_v8__LocalT_v8__Value_t, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
@@ -4191,14 +4659,16 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_RTPIncomingMediaStreamShared,
   _swigc__p_RTPReceiver,
   _swigc__p_RTPReceiverShared,
+  _swigc__p_ThumbnailGeneratorTask,
   _swigc__p_TimeService,
-  _swigc__p_VideoCodecs,
+  _swigc__p_VideoCodecsModule,
   _swigc__p_VideoDecoderFacade,
   _swigc__p_VideoEncoderFacade,
   _swigc__p_VideoInput,
   _swigc__p_VideoOutput,
   _swigc__p_VideoPipe,
   _swigc__p_char,
+  _swigc__p_v8__LocalT_v8__Object_t,
   _swigc__p_v8__LocalT_v8__Value_t,
 };
 
@@ -4586,12 +5056,12 @@ _exports_Properties_clientData.dtor = _wrap_delete_Properties;
 if (SWIGTYPE_p_Properties->clientdata == 0) {
   SWIGTYPE_p_Properties->clientdata = &_exports_Properties_clientData;
 }
-/* Name: _exports_VideoCodecs, Type: p_VideoCodecs, Dtor: 0 */
-SWIGV8_FUNCTION_TEMPLATE _exports_VideoCodecs_class = SWIGV8_CreateClassTemplate("_exports_VideoCodecs");
-SWIGV8_SET_CLASS_TEMPL(_exports_VideoCodecs_clientData.class_templ, _exports_VideoCodecs_class);
-_exports_VideoCodecs_clientData.dtor = 0;
-if (SWIGTYPE_p_VideoCodecs->clientdata == 0) {
-  SWIGTYPE_p_VideoCodecs->clientdata = &_exports_VideoCodecs_clientData;
+/* Name: _exports_VideoCodecsModule, Type: p_VideoCodecsModule, Dtor: 0 */
+SWIGV8_FUNCTION_TEMPLATE _exports_VideoCodecsModule_class = SWIGV8_CreateClassTemplate("_exports_VideoCodecsModule");
+SWIGV8_SET_CLASS_TEMPL(_exports_VideoCodecsModule_clientData.class_templ, _exports_VideoCodecsModule_class);
+_exports_VideoCodecsModule_clientData.dtor = 0;
+if (SWIGTYPE_p_VideoCodecsModule->clientdata == 0) {
+  SWIGTYPE_p_VideoCodecsModule->clientdata = &_exports_VideoCodecsModule_clientData;
 }
 /* Name: _exports_VideoInput, Type: p_VideoInput, Dtor: 0 */
 SWIGV8_FUNCTION_TEMPLATE _exports_VideoInput_class = SWIGV8_CreateClassTemplate("_exports_VideoInput");
@@ -4627,6 +5097,13 @@ SWIGV8_SET_CLASS_TEMPL(_exports_VideoDecoderFacade_clientData.class_templ, _expo
 _exports_VideoDecoderFacade_clientData.dtor = _wrap_delete_VideoDecoderFacade;
 if (SWIGTYPE_p_VideoDecoderFacade->clientdata == 0) {
   SWIGTYPE_p_VideoDecoderFacade->clientdata = &_exports_VideoDecoderFacade_clientData;
+}
+/* Name: _exports_ThumbnailGeneratorTask, Type: p_ThumbnailGeneratorTask, Dtor: _wrap_delete_ThumbnailGeneratorTask */
+SWIGV8_FUNCTION_TEMPLATE _exports_ThumbnailGeneratorTask_class = SWIGV8_CreateClassTemplate("_exports_ThumbnailGeneratorTask");
+SWIGV8_SET_CLASS_TEMPL(_exports_ThumbnailGeneratorTask_clientData.class_templ, _exports_ThumbnailGeneratorTask_class);
+_exports_ThumbnailGeneratorTask_clientData.dtor = _wrap_delete_ThumbnailGeneratorTask;
+if (SWIGTYPE_p_ThumbnailGeneratorTask->clientdata == 0) {
+  SWIGTYPE_p_ThumbnailGeneratorTask->clientdata = &_exports_ThumbnailGeneratorTask_clientData;
 }
 
 
@@ -4675,6 +5152,7 @@ SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "AddVideoOutput", _w
 SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "RemoveVideoOutput", _wrap_VideoDecoderFacade_RemoveVideoOutput);
 SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "SetIncoming", _wrap_VideoDecoderFacade_SetIncoming);
 SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "Stop", _wrap_VideoDecoderFacade_Stop);
+SWIGV8_AddMemberFunction(_exports_ThumbnailGeneratorTask_class, "Run", _wrap_ThumbnailGeneratorTask_Run);
 
 
   /* setup inheritances */
@@ -4855,15 +5333,15 @@ v8::Local<v8::Object> _exports_Properties_obj = _exports_Properties_class_0->Get
 #else
 v8::Local<v8::Object> _exports_Properties_obj = _exports_Properties_class_0->GetFunction(context).ToLocalChecked();
 #endif
-/* Class: VideoCodecs (_exports_VideoCodecs) */
-SWIGV8_FUNCTION_TEMPLATE _exports_VideoCodecs_class_0 = SWIGV8_CreateClassTemplate("VideoCodecs");
-_exports_VideoCodecs_class_0->SetCallHandler(_wrap_new_veto_VideoCodecs);
-_exports_VideoCodecs_class_0->Inherit(_exports_VideoCodecs_class);
+/* Class: VideoCodecsModule (_exports_VideoCodecsModule) */
+SWIGV8_FUNCTION_TEMPLATE _exports_VideoCodecsModule_class_0 = SWIGV8_CreateClassTemplate("VideoCodecsModule");
+_exports_VideoCodecsModule_class_0->SetCallHandler(_wrap_new_veto_VideoCodecsModule);
+_exports_VideoCodecsModule_class_0->Inherit(_exports_VideoCodecsModule_class);
 #if (SWIG_V8_VERSION < 0x0704)
-_exports_VideoCodecs_class_0->SetHiddenPrototype(true);
-v8::Local<v8::Object> _exports_VideoCodecs_obj = _exports_VideoCodecs_class_0->GetFunction();
+_exports_VideoCodecsModule_class_0->SetHiddenPrototype(true);
+v8::Local<v8::Object> _exports_VideoCodecsModule_obj = _exports_VideoCodecsModule_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_VideoCodecs_obj = _exports_VideoCodecs_class_0->GetFunction(context).ToLocalChecked();
+v8::Local<v8::Object> _exports_VideoCodecsModule_obj = _exports_VideoCodecsModule_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: VideoInput (_exports_VideoInput) */
 SWIGV8_FUNCTION_TEMPLATE _exports_VideoInput_class_0 = SWIGV8_CreateClassTemplate("VideoInput");
@@ -4915,10 +5393,24 @@ v8::Local<v8::Object> _exports_VideoDecoderFacade_obj = _exports_VideoDecoderFac
 #else
 v8::Local<v8::Object> _exports_VideoDecoderFacade_obj = _exports_VideoDecoderFacade_class_0->GetFunction(context).ToLocalChecked();
 #endif
+/* Class: ThumbnailGeneratorTask (_exports_ThumbnailGeneratorTask) */
+SWIGV8_FUNCTION_TEMPLATE _exports_ThumbnailGeneratorTask_class_0 = SWIGV8_CreateClassTemplate("ThumbnailGeneratorTask");
+_exports_ThumbnailGeneratorTask_class_0->SetCallHandler(_wrap_new_ThumbnailGeneratorTask);
+_exports_ThumbnailGeneratorTask_class_0->Inherit(_exports_ThumbnailGeneratorTask_class);
+#if (SWIG_V8_VERSION < 0x0704)
+_exports_ThumbnailGeneratorTask_class_0->SetHiddenPrototype(true);
+v8::Local<v8::Object> _exports_ThumbnailGeneratorTask_obj = _exports_ThumbnailGeneratorTask_class_0->GetFunction();
+#else
+v8::Local<v8::Object> _exports_ThumbnailGeneratorTask_obj = _exports_ThumbnailGeneratorTask_class_0->GetFunction(context).ToLocalChecked();
+#endif
 
 
   /* add static class functions and variables */
-  SWIGV8_AddStaticFunction(_exports_VideoCodecs_obj, "Initialize", _wrap_VideoCodecs_Initialize, context);
+  SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "Initialize", _wrap_VideoCodecsModule_Initialize, context);
+SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "Terminate", _wrap_VideoCodecsModule_Terminate, context);
+SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "EnableLog", _wrap_VideoCodecsModule_EnableLog, context);
+SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "EnableDebug", _wrap_VideoCodecsModule_EnableDebug, context);
+SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "EnableUltraDebug", _wrap_VideoCodecsModule_EnableUltraDebug, context);
 
 
   /* register classes */
@@ -4933,12 +5425,13 @@ SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("RTPReceiverShare
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("MediaFrameListenerBridge"), _exports_MediaFrameListenerBridge_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("MediaFrameListenerBridgeShared"), _exports_MediaFrameListenerBridgeShared_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("Properties"), _exports_Properties_obj));
-SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoCodecs"), _exports_VideoCodecs_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoCodecsModule"), _exports_VideoCodecsModule_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoInput"), _exports_VideoInput_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoOutput"), _exports_VideoOutput_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoPipe"), _exports_VideoPipe_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoEncoderFacade"), _exports_VideoEncoderFacade_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoDecoderFacade"), _exports_VideoDecoderFacade_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("ThumbnailGeneratorTask"), _exports_ThumbnailGeneratorTask_obj));
 
 
   /* create and register namespace objects */
