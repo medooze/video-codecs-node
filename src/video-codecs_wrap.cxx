@@ -2003,7 +2003,7 @@ public:
 		v8::Local<v8::Uint8Array> uint8array = v8::Local<v8::Uint8Array>::Cast(buffer);
 		//Get data and size
 		//TODO: Fix this to prevent potential memory corruption by modifying buffer while running task in thread
-		const uint8_t* data = (const uint8_t*)uint8array->Buffer()->GetContents().Data();
+		const uint8_t* data = (const uint8_t*)uint8array->Buffer()->GetBackingStore()->Data();
 		const uint32_t size = uint8array->Buffer()->ByteLength();
 
 		//Get codec for 
