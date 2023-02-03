@@ -1384,7 +1384,7 @@ static swig_module_info swig_module = {swig_types, 22, 0, 0, 0, 0};
 
 
 #include "VideoCodecFactory.h"
-#include "videopipe.h"	
+#include "VideoPipe.h"	
 #include "VideoEncoderWorker.h"
 #include "VideoDecoderWorker.h"
 #include "EventLoop.h"
@@ -2100,7 +2100,7 @@ public:
 				});
 
 			//Encoder jpeb
-			auto frame = jpeg->EncodeFrame(decoder->GetFrame(), decoder->GetWidth() * decoder->GetHeight() * 4 /3);
+			auto frame = jpeg->EncodeFrame(decoder->GetFrame());
 
 			//Check
 			if (!frame)

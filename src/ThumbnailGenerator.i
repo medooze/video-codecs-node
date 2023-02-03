@@ -100,7 +100,7 @@ public:
 				});
 
 			//Encoder jpeb
-			auto frame = jpeg->EncodeFrame(decoder->GetFrame(), decoder->GetWidth() * decoder->GetHeight() * 4 /3);
+			auto frame = jpeg->EncodeFrame(decoder->GetFrame());
 
 			//Check
 			if (!frame)

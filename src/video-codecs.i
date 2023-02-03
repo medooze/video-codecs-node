@@ -1,7 +1,7 @@
 %module medooze_video_codecs
 %{
 #include "VideoCodecFactory.h"
-#include "videopipe.h"	
+#include "VideoPipe.h"	
 #include "VideoEncoderWorker.h"
 #include "VideoDecoderWorker.h"
 #include "EventLoop.h"
