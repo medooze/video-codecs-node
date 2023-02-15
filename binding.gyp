@@ -84,6 +84,7 @@
 							"media-server/src/h264/h264decoder.cpp",
 							"media-server/src/h264/h264depacketizer.cpp",
 							"media-server/src/vp9/VP9Decoder.cpp",
+							"media-server/src/vp9/VP9Depacketizer.cpp",
 							"media-server/src/VideoLayerSelector.cpp",
 							"media-server/src/DependencyDescriptorLayerSelector.cpp",
 							"media-server/src/h264/H264LayerSelector.cpp",
