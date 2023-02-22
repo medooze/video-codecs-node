@@ -37,7 +37,7 @@
 			"ldflags" : [" -lpthread -lresolv"],
 			"link_settings": 
 			{
-        			'libraries': ["-lpthread -lpthread -lresolv -lavcodec -lswscale -lavformat -lavutil -lvpx -lx264"]
+        			'libraries': ["-lpthread -lpthread -lresolv -lavcodec -lswscale -lavformat -lavutil -lvpx -lx264 -lavfilter"]
       			},
 			"sources": 
 			[ 
@@ -68,6 +68,7 @@
 							"media-server/src/VideoDecoderWorker.cpp",
 							"media-server/src/VideoEncoderWorker.cpp",
 							"media-server/src/VideoPipe.cpp",
+							"media-server/src/Deinterlacer.cpp",
 							"media-server/src/EventLoop.cpp",
 							"media-server/src/MediaFrameListenerBridge.cpp",
 							"media-server/src/avcdescriptor.cpp",
