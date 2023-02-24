@@ -1724,9 +1724,9 @@ void log_ffmpeg(void* ptr, int level, const char* fmt, va_list vl)
 	//Remove buffer errors
 	//if (strstr(line,"vbv buffer overflow")!=NULL)
 		//exit
-	//	return;
+		//return;
 	//Log
-	Error(line);
+	Log(line);
 }
 
 class VideoCodecsModule
@@ -1963,13 +1963,29 @@ private:
 class ThumbnailGeneratorTask
 {
 public:
-	ThumbnailGeneratorTask(v8::Local<v8::Object> promise)
+	ThumbnailGeneratorTask( v8::Local<v8::Object> promise)
 	{
 		persistent = std::make_shared<Persistent<v8::Object>>(promise);
 	}
 
-	void Run(const char* codecName, v8::Local<v8::Object> buffer)
+	void Run(const char* encoderName, const char* decoderName, v8::Local<v8::Object> buffer)
 	{
+		Log("-ThumbnailGeneratorTask::Run() [encoder:%s,decoder:%s]\n", encoderName, decoderName);
+
+		//Get codec for encoding
+		VideoCodec::Type encoderCodec = VideoCodec::GetCodecForName(encoderName);
+
+		//If not found
+		if (encoderCodec==VideoCodec::UNKNOWN)
+			return VideoCodecsModule::Async([=,cloned=persistent](){
+				Nan::HandleScope scope;
+				int i = 0;
+				v8::Local<v8::Value> argv[1];
+				argv[i++] = Nan::New("Unknown encoder codec").ToLocalChecked();
+				//Call method
+				MakeCallback(cloned,"reject",i,argv);
+			});
+
 		//Cast to array view
 		v8::Local<v8::Uint8Array> uint8array = v8::Local<v8::Uint8Array>::Cast(buffer);
 		//Get data and size
@@ -1978,11 +1994,11 @@ public:
 		const uint32_t size = uint8array->ByteLength();
 
 		//Get codec for 
-		VideoCodec::Type codec = VideoCodec::GetCodecForName(codecName);
+		VideoCodec::Type codec = VideoCodec::GetCodecForName(decoderName);
 
 		//If not found
 		if (codec==VideoCodec::UNKNOWN)
-			VideoCodecsModule::Async([=,cloned=persistent](){
+			return VideoCodecsModule::Async([=,cloned=persistent](){
 				Nan::HandleScope scope;
 				int i = 0;
 				v8::Local<v8::Value> argv[1];
@@ -1993,25 +2009,25 @@ public:
 
 		//Generate thumbanail in a different thread
 		auto thread = new std::thread([=,cloned=persistent](){
-			//Create jpeg encoder
+			//Create encoder
 			Properties properties;
-			std::unique_ptr<VideoEncoder> jpeg(VideoCodecFactory::CreateEncoder(VideoCodec::JPEG,properties));
-
-			//Set
-			jpeg->SetFrameRate(1, 2000, 0);
+			std::unique_ptr<VideoEncoder> encoder(VideoCodecFactory::CreateEncoder(encoderCodec,properties));
 
 			//Check
-			if (!jpeg)
+			if (!encoder)
 				return VideoCodecsModule::Async([=,cloned=cloned](){
 					Nan::HandleScope scope;
 					int i = 0;
 					v8::Local<v8::Value> argv[1];
-					argv[i++] = Nan::New("Could not open JPEG encoder").ToLocalChecked();
+					argv[i++] = Nan::New("Could not open encoder").ToLocalChecked();
 					//Call method
 					MakeCallback(cloned,"reject",i,argv);
 				});
 
-			//Create jpeg encoder
+			//Set
+			encoder->SetFrameRate(1, 2000, 0);
+
+			//Create decoder
 			std::unique_ptr<VideoDecoder> decoder(VideoCodecFactory::CreateDecoder(codec));
 
 			//Check
@@ -2048,18 +2064,18 @@ public:
 				});
 
 			//Set decoded size 
-			if (!jpeg->SetSize(decoder->GetWidth(),decoder->GetHeight()))
+			if (!encoder->SetSize(decoder->GetWidth(),decoder->GetHeight()))
 				return VideoCodecsModule::Async([=,cloned2=cloned](){
 					Nan::HandleScope scope;
 					int i = 0;
 					v8::Local<v8::Value> argv[1];
-					argv[i++] = Nan::New("Error setting JPEG size").ToLocalChecked();
+					argv[i++] = Nan::New("Error setting thumbnail size").ToLocalChecked();
 					//Call method
 					MakeCallback(cloned2,"reject",i,argv);
 				});
 
 			//Encoder jpeb
-			auto frame = jpeg->EncodeFrame(decoder->GetFrame());
+			auto frame = encoder->EncodeFrame(decoder->GetFrame());
 
 			//Check
 			if (!frame)
@@ -2067,7 +2083,7 @@ public:
 					Nan::HandleScope scope;
 					int i = 0;
 					v8::Local<v8::Value> argv[1];
-					argv[i++] = Nan::New("Error encoding JPEG").ToLocalChecked();
+					argv[i++] = Nan::New("Error encoding thumnnail").ToLocalChecked();
 					//Call method
 					MakeCallback(cloned,"reject",i,argv);
 				});
@@ -4478,14 +4494,18 @@ static SwigV8ReturnValue _wrap_ThumbnailGeneratorTask_Run(const SwigV8Arguments 
   SWIGV8_VALUE jsresult;
   ThumbnailGeneratorTask *arg1 = (ThumbnailGeneratorTask *) 0 ;
   char *arg2 = (char *) 0 ;
-  v8::Local< v8::Object > arg3 ;
+  char *arg3 = (char *) 0 ;
+  v8::Local< v8::Object > arg4 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
   
-  if(args.Length() != 2) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_ThumbnailGeneratorTask_Run.");
+  if(args.Length() != 3) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_ThumbnailGeneratorTask_Run.");
   
   res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_ThumbnailGeneratorTask, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
@@ -4497,13 +4517,19 @@ static SwigV8ReturnValue _wrap_ThumbnailGeneratorTask_Run(const SwigV8Arguments 
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "ThumbnailGeneratorTask_Run" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = reinterpret_cast< char * >(buf2);
-  {
-    arg3 = v8::Local<v8::Object>::Cast(args[1]);
+  res3 = SWIG_AsCharPtrAndSize(args[1], &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "ThumbnailGeneratorTask_Run" "', argument " "3"" of type '" "char const *""'");
   }
-  (arg1)->Run((char const *)arg2,arg3);
+  arg3 = reinterpret_cast< char * >(buf3);
+  {
+    arg4 = v8::Local<v8::Object>::Cast(args[2]);
+  }
+  (arg1)->Run((char const *)arg2,(char const *)arg3,arg4);
   jsresult = SWIGV8_UNDEFINED();
   
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
+  if (alloc3 == SWIG_NEWOBJ) delete[] buf3;
   
   SWIGV8_RETURN(jsresult);
   
