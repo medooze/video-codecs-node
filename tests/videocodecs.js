@@ -30,11 +30,18 @@ tap.test("VideoCodecs",async function(suite){
 		await suite.test("encoder+decoder " + codec, async function(test){
 			try {
 				//Create encoder and decoder
-				const videoEncoder	= VideoCodecs.createVideoEncoder("h264", {
+				const videoEncoder	= VideoCodecs.createVideoEncoder(codec, {
 					width	: 640,
 					height	: 380,
 					fps	: 30,
-					bitrate : 512000
+					bitrate : 512000,
+					properties: {
+						"int"		: 128,
+						"string"	: "string",
+						"boolean"	: true,
+						"vp8.threads"	: 4,
+						"vp8.cpuused"	: -2,
+					}
 				});
 				const videoDecoder	= VideoCodecs.createVideoDecoder();
 				//Attach
