@@ -60,6 +60,7 @@
 							"media-server/src/vp8",
 							"media-server/src/vp9",
 							"media-server/src/h264",
+							"media-server/src/h265",
 						],
 						"sources": 
 						[
@@ -84,6 +85,10 @@
 							"media-server/src/h264/h264encoder.cpp",
 							"media-server/src/h264/h264decoder.cpp",
 							"media-server/src/h264/h264depacketizer.cpp",
+							"media-server/src/h265/h265.cpp",
+							"media-server/src/h265/h265decoder.cpp",
+							"media-server/src/h265/H265Depacketizer.cpp",
+							"media-server/src/h265/HEVCDescriptor.cpp",
 							"media-server/src/vp9/VP9Decoder.cpp",
 							"media-server/src/vp9/VP9Depacketizer.cpp",
 							"media-server/src/VideoLayerSelector.cpp",
