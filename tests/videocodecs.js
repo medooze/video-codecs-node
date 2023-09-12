@@ -7,9 +7,9 @@ function sleep(ms)
 }
 
 
-VideoCodecs.enableLog(false);
-VideoCodecs.enableDebug(false);
-VideoCodecs.enableUltraDebug(false);
+VideoCodecs.enableLog(true);
+VideoCodecs.enableDebug(true);
+VideoCodecs.enableUltraDebug(true);
 
 tap.test("VideoCodecs",async function(suite){
 	
@@ -26,6 +26,7 @@ tap.test("VideoCodecs",async function(suite){
 		//Test for ok
 		test.end();
 	});
+
 	for (const codec of ["h264","vp8"])
 		await suite.test("encoder+decoder " + codec, async function(test){
 			try {
@@ -39,6 +40,7 @@ tap.test("VideoCodecs",async function(suite){
 						"int"		: 128,
 						"string"	: "string",
 						"boolean"	: true,
+						"float"		: 0.1,
 						"vp8.threads"	: 4,
 						"vp8.cpuused"	: -2,
 					}
@@ -68,6 +70,42 @@ tap.test("VideoCodecs",async function(suite){
 				test.fail();
 			}
 		});
+	await suite.test("encoder nested properties", async function(test){
+		try {
+			//Create encoder and decoder
+			const videoEncoder	= VideoCodecs.createVideoEncoder("vp8", {
+				width	: 640,
+				height	: 380,
+				fps	: 30,
+				bitrate : 512000,
+				properties: {
+					"int"		: 128,
+					"string"	: "string",
+					"boolean"	: true,
+					"float"		: 0.1,
+					vp8		: {
+						threads	: 4,
+						cpuused	: -2,
+						"float"	: 0.1,
+					}
+				}
+			});
+
+			//Create video track
+			const videoTrack = videoEncoder.createIncomingStreamTrack(); 
+
+			await sleep(100)
+
+			//Stop all
+			videoEncoder.stop();
+			//Test for ok
+			test.end();
+		} catch (error) {
+			console.error(error);
+			//Should not get here
+			test.fail();
+		}
+	});
 	suite.end();
 }).then(() =>
 {
