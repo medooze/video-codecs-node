@@ -19,5 +19,5 @@ jobs:
             repo: 'static-analysis',
             workflow_id: 'coverity-single-repo.yml',
             ref: 'master',
-            inputs: { repo: 'video-server-node', private: false, commit: '${{ github.sha }}' }
+            inputs: { repo: 'video-codecs-node', private: false, commit: '${{ github.sha }}' }
           })
