@@ -61,6 +61,9 @@ public:
 	static void Terminate()
 	{
 		Log("-VideoCodecsModule::Terminate\n");
+
+		if (!uv_is_active((uv_handle_t *)&async)) return;
+
 		//Close handle
 		uv_close((uv_handle_t *)&async, NULL);
 		

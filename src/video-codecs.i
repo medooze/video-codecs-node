@@ -100,3 +100,7 @@ bool MakeCallback(const std::shared_ptr<Persistent<v8::Object>>& persistent, con
 
 
 
+%init %{
+	VideoCodecsModule::Initialize();
+	std::atexit(VideoCodecsModule::Terminate);
+%}
