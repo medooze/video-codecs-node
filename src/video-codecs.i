@@ -74,6 +74,18 @@ bool MakeCallback(const std::shared_ptr<Persistent<v8::Object>>& persistent, con
 
 %}
 
+%include "stdint.i"
+%include "std_string.i"
+%include "std_vector.i"
+%include "exception.i"
+
+#define QWORD		uint64_t
+#define DWORD		uint32_t
+#define WORD		uint16_t
+#define SWORD		int16_t
+#define BYTE		uint8_t
+#define SBYTE		char
+
 %typemap(in) v8::Local<v8::Object> {
 	$1 = v8::Local<v8::Object>::Cast($input);
 }

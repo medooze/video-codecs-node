@@ -106,6 +106,183 @@ tap.test("VideoCodecs",async function(suite){
 			test.fail();
 		}
 	});
+	await suite.test("encoder scaleResolutionDownBy", async function(test){
+		try {
+			//Create encoder and decoder
+			const videoEncoder	= VideoCodecs.createVideoEncoder("vp8", {
+				scaleResolutionBy: 1,
+				fps	: 30,
+				bitrate : 512000,
+				properties: {
+					"int"		: 128,
+					"string"	: "string",
+					"boolean"	: true,
+					"float"		: 0.1,
+					vp8		: {
+						threads	: 4,
+						cpuused	: -2,
+						"float"	: 0.1,
+					}
+				}
+			});
+
+			//Create video track
+			const videoTrack = videoEncoder.createIncomingStreamTrack(); 
+
+			await sleep(100)
+
+			//Stop all
+			videoEncoder.stop();
+			//Test for ok
+			test.end();
+		} catch (error) {
+			console.error(error);
+			//Should not get here
+			test.fail();
+		}
+	});
+	await suite.test("encoder scaleResolutionDownBy", async function(test){
+		try {
+			//Create encoder and decoder
+			const videoEncoder	= VideoCodecs.createVideoEncoder("vp8", {
+				scaleResolutionBy: 1,
+				fps	: 30,
+				bitrate : 512000,
+				properties: {
+					"int"		: 128,
+					"string"	: "string",
+					"boolean"	: true,
+					"float"		: 0.1,
+					vp8		: {
+						threads	: 4,
+						cpuused	: -2,
+						"float"	: 0.1,
+					}
+				}
+			});
+
+			//Create video track
+			const videoTrack = videoEncoder.createIncomingStreamTrack(); 
+
+			await sleep(100)
+
+			//Stop all
+			videoEncoder.stop();
+			//Test for ok
+			test.end();
+		} catch (error) {
+			console.error(error);
+			//Should not get here
+			test.fail();
+		}
+	});
+	await suite.test("encoder scaleResolutionToHeight", async function(test){
+		try {
+			//Create encoder and decoder
+			const videoEncoder	= VideoCodecs.createVideoEncoder("vp8", {
+				scaleResolutionToHeigth: 1080,
+				fps	: 30,
+				bitrate : 512000,
+				properties: {
+					"int"		: 128,
+					"string"	: "string",
+					"boolean"	: true,
+					"float"		: 0.1,
+					vp8		: {
+						threads	: 4,
+						cpuused	: -2,
+						"float"	: 0.1,
+					}
+				}
+			});
+
+			//Create video track
+			const videoTrack = videoEncoder.createIncomingStreamTrack(); 
+
+			await sleep(100)
+
+			//Stop all
+			videoEncoder.stop();
+			//Test for ok
+			test.end();
+		} catch (error) {
+			console.error(error);
+			//Should not get here
+			test.fail();
+		}
+	});
+	await suite.test("encoder scaleResolutionToHeight no allowedDownScaling ", async function(test){
+		try {
+			//Create encoder and decoder
+			const videoEncoder	= VideoCodecs.createVideoEncoder("vp8", {
+				scaleResolutionToHeigth: 1080,
+				allowSameHeigth : false,
+				fps	: 30,
+				bitrate : 512000,
+				properties: {
+					"int"		: 128,
+					"string"	: "string",
+					"boolean"	: true,
+					"float"		: 0.1,
+					vp8		: {
+						threads	: 4,
+						cpuused	: -2,
+						"float"	: 0.1,
+					}
+				}
+			});
+
+			//Create video track
+			const videoTrack = videoEncoder.createIncomingStreamTrack(); 
+
+			await sleep(100)
+
+			//Stop all
+			videoEncoder.stop();
+			//Test for ok
+			test.end();
+		} catch (error) {
+			console.error(error);
+			//Should not get here
+			test.fail();
+		}
+	});
+	await suite.test("encoder scaleResolutionToHeight allowedDownScaling ", async function(test){
+		try {
+			//Create encoder and decoder
+			const videoEncoder	= VideoCodecs.createVideoEncoder("vp8", {
+				scaleResolutionToHeigth: 1080,
+				allowSameHeigth : true,
+				fps	: 30,
+				bitrate : 512000,
+				properties: {
+					"int"		: 128,
+					"string"	: "string",
+					"boolean"	: true,
+					"float"		: 0.1,
+					vp8		: {
+						threads	: 4,
+						cpuused	: -2,
+						"float"	: 0.1,
+					}
+				}
+			});
+
+			//Create video track
+			const videoTrack = videoEncoder.createIncomingStreamTrack(); 
+
+			await sleep(100)
+
+			//Stop all
+			videoEncoder.stop();
+			//Test for ok
+			test.end();
+		} catch (error) {
+			console.error(error);
+			//Should not get here
+			test.fail();
+		}
+	});
 	suite.end();
 }).then(() =>
 {
