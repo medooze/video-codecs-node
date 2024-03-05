@@ -1,6 +1,6 @@
 {
   "name": "medooze-video-codecs",
-  "version": "1.19.13",
+  "version": "1.19.14",
   "description": "Video codecs for Media and RTMP servers",
   "main": "index.js",
   "scripts": {
