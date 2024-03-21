@@ -107,7 +107,7 @@ bool MakeCallback(const std::shared_ptr<Persistent<v8::Object>>& persistent, con
 
 
 %include "VideoEncoderFacade.i"
-%include "VideoDecoderFacade.i"
+%include "VideoDecoderWorker.i"
 %include "ThumbnailGenerator.i"
 
 
