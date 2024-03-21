@@ -3,6 +3,8 @@
 struct VideoDecoderWorker
 {
 	int Start();
+	void AddVideoOutput(VideoOutput* ouput);
+	void RemoveVideoOutput(VideoOutput* ouput);
 	int Stop();
 };
 
