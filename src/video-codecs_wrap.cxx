@@ -2020,6 +2020,12 @@ public:
 		while(queue.try_dequeue(func)){}
 	}
 	
+	static void EnableWarning(bool flag)
+	{
+		//Enable log
+		Logger::EnableWarning(flag);
+	}
+	
 	static void EnableLog(bool flag)
 	{
 		//Enable log
@@ -4754,6 +4760,33 @@ fail:
 }
 
 
+static SwigV8ReturnValue _wrap_VideoCodecsModule_EnableWarning(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  bool arg1 ;
+  bool val1 ;
+  int ecode1 = 0 ;
+  
+  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoCodecsModule_EnableWarning.");
+  
+  ecode1 = SWIG_AsVal_bool(args[0], &val1);
+  if (!SWIG_IsOK(ecode1)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "VideoCodecsModule_EnableWarning" "', argument " "1"" of type '" "bool""'");
+  } 
+  arg1 = static_cast< bool >(val1);
+  VideoCodecsModule::EnableWarning(arg1);
+  jsresult = SWIGV8_UNDEFINED();
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
 static SwigV8ReturnValue _wrap_VideoCodecsModule_EnableLog(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
@@ -6564,6 +6597,7 @@ v8::Local<v8::Object> _exports_ThumbnailGeneratorTask_obj = _exports_ThumbnailGe
   /* add static class functions and variables */
   SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "Initialize", _wrap_VideoCodecsModule_Initialize, context);
 SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "Terminate", _wrap_VideoCodecsModule_Terminate, context);
+SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "EnableWarning", _wrap_VideoCodecsModule_EnableWarning, context);
 SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "EnableLog", _wrap_VideoCodecsModule_EnableLog, context);
 SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "EnableDebug", _wrap_VideoCodecsModule_EnableDebug, context);
 SWIGV8_AddStaticFunction(_exports_VideoCodecsModule_obj, "EnableUltraDebug", _wrap_VideoCodecsModule_EnableUltraDebug, context);
