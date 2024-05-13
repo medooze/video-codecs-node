@@ -1353,24 +1353,25 @@ fail: ;
 #define SWIGTYPE_p_ThumbnailGeneratorTask swig_types[12]
 #define SWIGTYPE_p_TimeService swig_types[13]
 #define SWIGTYPE_p_VideoCodecsModule swig_types[14]
-#define SWIGTYPE_p_VideoDecoderFacade swig_types[15]
-#define SWIGTYPE_p_VideoEncoderFacade swig_types[16]
-#define SWIGTYPE_p_VideoInput swig_types[17]
-#define SWIGTYPE_p_VideoOutput swig_types[18]
-#define SWIGTYPE_p_VideoPipe swig_types[19]
-#define SWIGTYPE_p_char swig_types[20]
-#define SWIGTYPE_p_int swig_types[21]
-#define SWIGTYPE_p_long_long swig_types[22]
-#define SWIGTYPE_p_short swig_types[23]
-#define SWIGTYPE_p_signed_char swig_types[24]
-#define SWIGTYPE_p_unsigned_char swig_types[25]
-#define SWIGTYPE_p_unsigned_int swig_types[26]
-#define SWIGTYPE_p_unsigned_long_long swig_types[27]
-#define SWIGTYPE_p_unsigned_short swig_types[28]
-#define SWIGTYPE_p_v8__LocalT_v8__Object_t swig_types[29]
-#define SWIGTYPE_p_v8__LocalT_v8__Value_t swig_types[30]
-static swig_type_info *swig_types[32];
-static swig_module_info swig_module = {swig_types, 31, 0, 0, 0, 0};
+#define SWIGTYPE_p_VideoDecoderWorker swig_types[15]
+#define SWIGTYPE_p_VideoDecoderWorkerShared swig_types[16]
+#define SWIGTYPE_p_VideoEncoderFacade swig_types[17]
+#define SWIGTYPE_p_VideoInput swig_types[18]
+#define SWIGTYPE_p_VideoOutput swig_types[19]
+#define SWIGTYPE_p_VideoPipe swig_types[20]
+#define SWIGTYPE_p_char swig_types[21]
+#define SWIGTYPE_p_int swig_types[22]
+#define SWIGTYPE_p_long_long swig_types[23]
+#define SWIGTYPE_p_short swig_types[24]
+#define SWIGTYPE_p_signed_char swig_types[25]
+#define SWIGTYPE_p_unsigned_char swig_types[26]
+#define SWIGTYPE_p_unsigned_int swig_types[27]
+#define SWIGTYPE_p_unsigned_long_long swig_types[28]
+#define SWIGTYPE_p_unsigned_short swig_types[29]
+#define SWIGTYPE_p_v8__LocalT_v8__Object_t swig_types[30]
+#define SWIGTYPE_p_v8__LocalT_v8__Value_t swig_types[31]
+static swig_type_info *swig_types[33];
+static swig_module_info swig_module = {swig_types, 32, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2103,51 +2104,29 @@ private:
 };
 
 
+using VideoDecoderWorkerShared = std::shared_ptr<VideoDecoderWorker>;
 
-class VideoDecoderFacade : public VideoDecoderWorker
+static VideoDecoderWorkerShared VideoDecoderWorkerShared_null_ptr = {};
+
+VideoDecoderWorkerShared* VideoDecoderWorkerShared_from_proxy(const v8::Local<v8::Value> input)
 {
-public: 	
-	VideoDecoderFacade() = default;
-	~VideoDecoderFacade()
-	{
-		//Remove listener from old stream
-		if (this->incoming) 
-			this->incoming->RemoveListener(this);
+  void *ptr = nullptr;
+  if (input.IsEmpty() || !input->IsObject()) return &VideoDecoderWorkerShared_null_ptr;
+  v8::Local<v8::Proxy> proxy = v8::Local<v8::Proxy>::Cast(input);
+  if (proxy.IsEmpty()) return &VideoDecoderWorkerShared_null_ptr;
+  v8::Local<v8::Value> target = proxy->GetTarget();
+  SWIG_ConvertPtr(target, &ptr, SWIGTYPE_p_VideoDecoderWorkerShared,  0 );
+  if (!ptr) return &VideoDecoderWorkerShared_null_ptr;
+  return reinterpret_cast<VideoDecoderWorkerShared*>(ptr);
+}
+
+
+SWIGINTERN VideoDecoderWorkerShared *new_VideoDecoderWorkerShared(){
+		return new std::shared_ptr<VideoDecoderWorker>(new VideoDecoderWorker());
 	}
-	
-	bool SetIncoming(const RTPIncomingMediaStream::shared& incoming)
-	{
-		//If they are the same
-		if (this->incoming==incoming)
-			//DO nothing
-			return false;
-		//Remove listener from old stream
-		if (this->incoming) 
-			this->incoming->RemoveListener(this);
-
-                //Store stream and receiver
-                this->incoming = incoming;
-		//Double check
-		if (this->incoming)
-			//Add us as listeners
-			this->incoming->AddListener(this);
-		
-		//OK
-		return true;
-	}
-	
-	int Stop()
-	{
-		SetIncoming(nullptr);
-		return VideoDecoderWorker::Stop();
-	}
-
-private:
-	RTPIncomingMediaStream::shared incoming;	
-};
-
-
-
+SWIGINTERN MediaFrameListenerShared VideoDecoderWorkerShared_toMediaFrameListener__SWIG(VideoDecoderWorkerShared *self){
+	return std::static_pointer_cast<MediaFrameListener>(*self);
+}
 
 
 
@@ -2184,6 +2163,8 @@ public:
 		const uint8_t* data = (const uint8_t*)uint8array->Buffer()->GetBackingStore()->Data() + uint8array->ByteOffset();
 		const uint32_t size = uint8array->ByteLength();
 
+		
+
 		//Get codec for 
 		VideoCodec::Type codec = VideoCodec::GetCodecForName(decoderName);
 
@@ -2199,7 +2180,7 @@ public:
 			});
 
 		//Generate thumbanail in a different thread
-		auto thread = new std::thread([=,cloned=persistent](){
+		auto thread = new std::thread([=, videoFrame = std::make_shared<VideoFrame>(codec, std::make_shared<Buffer>(data,size)), cloned=persistent](){
 			//Create encoder
 			Properties properties;
 			std::unique_ptr<VideoEncoder> encoder(VideoCodecFactory::CreateEncoder(encoderCodec,properties));
@@ -2231,9 +2212,9 @@ public:
 					//Call method
 					MakeCallback(cloned,"reject",i,argv);
 				});
-				
+
 			//Decode frame
-			if(!decoder->Decode(data, size))
+			if(!decoder->Decode(videoFrame))
 				return VideoCodecsModule::Async([=,cloned=cloned](){
 					Nan::HandleScope scope;
 					int i = 0;
@@ -2326,7 +2307,8 @@ SWIGV8_ClientData _exports_VideoInput_clientData;
 SWIGV8_ClientData _exports_VideoOutput_clientData;
 SWIGV8_ClientData _exports_VideoPipe_clientData;
 SWIGV8_ClientData _exports_VideoEncoderFacade_clientData;
-SWIGV8_ClientData _exports_VideoDecoderFacade_clientData;
+SWIGV8_ClientData _exports_VideoDecoderWorker_clientData;
+SWIGV8_ClientData _exports_VideoDecoderWorkerShared_clientData;
 SWIGV8_ClientData _exports_ThumbnailGeneratorTask_clientData;
 
 
@@ -5336,22 +5318,22 @@ static void _wrap_delete_VideoEncoderFacade(const v8::WeakCallbackInfo<SWIGV8_Pr
 }
 
 
-static SwigV8ReturnValue _wrap_VideoDecoderFacade_Start(const SwigV8Arguments &args) {
+static SwigV8ReturnValue _wrap_VideoDecoderWorker_Start(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
   SWIGV8_VALUE jsresult;
-  VideoDecoderFacade *arg1 = (VideoDecoderFacade *) 0 ;
+  VideoDecoderWorker *arg1 = (VideoDecoderWorker *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int result;
   
-  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderFacade_Start.");
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderWorker_Start.");
   
-  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderFacade, 0 |  0 );
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderWorker, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderFacade_Start" "', argument " "1"" of type '" "VideoDecoderFacade *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderWorker_Start" "', argument " "1"" of type '" "VideoDecoderWorker *""'"); 
   }
-  arg1 = reinterpret_cast< VideoDecoderFacade * >(argp1);
+  arg1 = reinterpret_cast< VideoDecoderWorker * >(argp1);
   result = (int)(arg1)->Start();
   jsresult = SWIG_From_int(static_cast< int >(result));
   
@@ -5364,27 +5346,27 @@ fail:
 }
 
 
-static SwigV8ReturnValue _wrap_VideoDecoderFacade_AddVideoOutput(const SwigV8Arguments &args) {
+static SwigV8ReturnValue _wrap_VideoDecoderWorker_AddVideoOutput(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
   SWIGV8_VALUE jsresult;
-  VideoDecoderFacade *arg1 = (VideoDecoderFacade *) 0 ;
+  VideoDecoderWorker *arg1 = (VideoDecoderWorker *) 0 ;
   VideoOutput *arg2 = (VideoOutput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   void *argp2 = 0 ;
   int res2 = 0 ;
   
-  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderFacade_AddVideoOutput.");
+  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderWorker_AddVideoOutput.");
   
-  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderFacade, 0 |  0 );
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderWorker, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderFacade_AddVideoOutput" "', argument " "1"" of type '" "VideoDecoderFacade *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderWorker_AddVideoOutput" "', argument " "1"" of type '" "VideoDecoderWorker *""'"); 
   }
-  arg1 = reinterpret_cast< VideoDecoderFacade * >(argp1);
+  arg1 = reinterpret_cast< VideoDecoderWorker * >(argp1);
   res2 = SWIG_ConvertPtr(args[0], &argp2,SWIGTYPE_p_VideoOutput, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "VideoDecoderFacade_AddVideoOutput" "', argument " "2"" of type '" "VideoOutput *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "VideoDecoderWorker_AddVideoOutput" "', argument " "2"" of type '" "VideoOutput *""'"); 
   }
   arg2 = reinterpret_cast< VideoOutput * >(argp2);
   (arg1)->AddVideoOutput(arg2);
@@ -5400,27 +5382,27 @@ fail:
 }
 
 
-static SwigV8ReturnValue _wrap_VideoDecoderFacade_RemoveVideoOutput(const SwigV8Arguments &args) {
+static SwigV8ReturnValue _wrap_VideoDecoderWorker_RemoveVideoOutput(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
   SWIGV8_VALUE jsresult;
-  VideoDecoderFacade *arg1 = (VideoDecoderFacade *) 0 ;
+  VideoDecoderWorker *arg1 = (VideoDecoderWorker *) 0 ;
   VideoOutput *arg2 = (VideoOutput *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   void *argp2 = 0 ;
   int res2 = 0 ;
   
-  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderFacade_RemoveVideoOutput.");
+  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderWorker_RemoveVideoOutput.");
   
-  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderFacade, 0 |  0 );
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderWorker, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderFacade_RemoveVideoOutput" "', argument " "1"" of type '" "VideoDecoderFacade *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderWorker_RemoveVideoOutput" "', argument " "1"" of type '" "VideoDecoderWorker *""'"); 
   }
-  arg1 = reinterpret_cast< VideoDecoderFacade * >(argp1);
+  arg1 = reinterpret_cast< VideoDecoderWorker * >(argp1);
   res2 = SWIG_ConvertPtr(args[0], &argp2,SWIGTYPE_p_VideoOutput, 0 |  0 );
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "VideoDecoderFacade_RemoveVideoOutput" "', argument " "2"" of type '" "VideoOutput *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "VideoDecoderWorker_RemoveVideoOutput" "', argument " "2"" of type '" "VideoOutput *""'"); 
   }
   arg2 = reinterpret_cast< VideoOutput * >(argp2);
   (arg1)->RemoveVideoOutput(arg2);
@@ -5436,55 +5418,22 @@ fail:
 }
 
 
-static SwigV8ReturnValue _wrap_VideoDecoderFacade_SetIncoming(const SwigV8Arguments &args) {
+static SwigV8ReturnValue _wrap_VideoDecoderWorker_Stop(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
   SWIGV8_VALUE jsresult;
-  VideoDecoderFacade *arg1 = (VideoDecoderFacade *) 0 ;
-  RTPIncomingMediaStreamShared *arg2 = 0 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  bool result;
-  
-  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderFacade_SetIncoming.");
-  
-  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderFacade, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderFacade_SetIncoming" "', argument " "1"" of type '" "VideoDecoderFacade *""'"); 
-  }
-  arg1 = reinterpret_cast< VideoDecoderFacade * >(argp1);
-  {
-    arg2 = RTPIncomingMediaStreamShared_from_proxy(args[0]);
-  }
-  result = (bool)(arg1)->SetIncoming((RTPIncomingMediaStreamShared const &)*arg2);
-  jsresult = SWIG_From_bool(static_cast< bool >(result));
-  
-  
-  
-  SWIGV8_RETURN(jsresult);
-  
-  goto fail;
-fail:
-  SWIGV8_RETURN(SWIGV8_UNDEFINED());
-}
-
-
-static SwigV8ReturnValue _wrap_VideoDecoderFacade_Stop(const SwigV8Arguments &args) {
-  SWIGV8_HANDLESCOPE();
-  
-  SWIGV8_VALUE jsresult;
-  VideoDecoderFacade *arg1 = (VideoDecoderFacade *) 0 ;
+  VideoDecoderWorker *arg1 = (VideoDecoderWorker *) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int result;
   
-  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderFacade_Stop.");
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderWorker_Stop.");
   
-  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderFacade, 0 |  0 );
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderWorker, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderFacade_Stop" "', argument " "1"" of type '" "VideoDecoderFacade *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderWorker_Stop" "', argument " "1"" of type '" "VideoDecoderWorker *""'"); 
   }
-  arg1 = reinterpret_cast< VideoDecoderFacade * >(argp1);
+  arg1 = reinterpret_cast< VideoDecoderWorker * >(argp1);
   result = (int)(arg1)->Stop();
   jsresult = SWIG_From_int(static_cast< int >(result));
   
@@ -5497,18 +5446,18 @@ fail:
 }
 
 
-static SwigV8ReturnValue _wrap_new_VideoDecoderFacade(const SwigV8Arguments &args) {
+static SwigV8ReturnValue _wrap_new_VideoDecoderWorker(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
   SWIGV8_OBJECT self = args.Holder();
-  VideoDecoderFacade *result;
-  if(self->InternalFieldCount() < 1) SWIG_exception_fail(SWIG_ERROR, "Illegal call of constructor _wrap_new_VideoDecoderFacade.");
-  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_new_VideoDecoderFacade.");
-  result = (VideoDecoderFacade *)new VideoDecoderFacade();
+  VideoDecoderWorker *result;
+  if(self->InternalFieldCount() < 1) SWIG_exception_fail(SWIG_ERROR, "Illegal call of constructor _wrap_new_VideoDecoderWorker.");
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_new_VideoDecoderWorker.");
+  result = (VideoDecoderWorker *)new VideoDecoderWorker();
   
   
   
-  SWIGV8_SetPrivateData(self, result, SWIGTYPE_p_VideoDecoderFacade, SWIG_POINTER_OWN);
+  SWIGV8_SetPrivateData(self, result, SWIGTYPE_p_VideoDecoderWorker, SWIG_POINTER_OWN);
   SWIGV8_RETURN(self);
   
   goto fail;
@@ -5517,11 +5466,98 @@ fail:
 }
 
 
-static void _wrap_delete_VideoDecoderFacade(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
+static void _wrap_delete_VideoDecoderWorker(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
   SWIGV8_Proxy *proxy = data.GetParameter();
   
   if(proxy->swigCMemOwn && proxy->swigCObject) {
-    VideoDecoderFacade * arg1 = (VideoDecoderFacade *)proxy->swigCObject;
+    VideoDecoderWorker * arg1 = (VideoDecoderWorker *)proxy->swigCObject;
+    delete arg1;
+  }
+  delete proxy;
+}
+
+
+static SwigV8ReturnValue _wrap_new_VideoDecoderWorkerShared(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_OBJECT self = args.Holder();
+  VideoDecoderWorkerShared *result;
+  if(self->InternalFieldCount() < 1) SWIG_exception_fail(SWIG_ERROR, "Illegal call of constructor _wrap_new_VideoDecoderWorkerShared.");
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_new_VideoDecoderWorkerShared.");
+  result = (VideoDecoderWorkerShared *)new_VideoDecoderWorkerShared();
+  
+  
+  
+  SWIGV8_SetPrivateData(self, result, SWIGTYPE_p_VideoDecoderWorkerShared, SWIG_POINTER_OWN);
+  SWIGV8_RETURN(self);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_VideoDecoderWorkerShared_toMediaFrameListener(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoDecoderWorkerShared *arg1 = (VideoDecoderWorkerShared *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  MediaFrameListenerShared result;
+  
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderWorkerShared_toMediaFrameListener.");
+  
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderWorkerShared, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderWorkerShared_toMediaFrameListener" "', argument " "1"" of type '" "VideoDecoderWorkerShared *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoDecoderWorkerShared * >(argp1);
+  result = VideoDecoderWorkerShared_toMediaFrameListener__SWIG(arg1);
+  jsresult = SWIG_NewPointerObj((new MediaFrameListenerShared(static_cast< const MediaFrameListenerShared& >(result))), SWIGTYPE_p_MediaFrameListenerShared, SWIG_POINTER_OWN |  0 );
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_VideoDecoderWorkerShared_get(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoDecoderWorkerShared *arg1 = (VideoDecoderWorkerShared *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  VideoDecoderWorker *result = 0 ;
+  
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoDecoderWorkerShared_get.");
+  
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoDecoderWorkerShared, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoDecoderWorkerShared_get" "', argument " "1"" of type '" "VideoDecoderWorkerShared *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoDecoderWorkerShared * >(argp1);
+  result = (VideoDecoderWorker *)(arg1)->get();
+  jsresult = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_VideoDecoderWorker, 0 |  0 );
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static void _wrap_delete_VideoDecoderWorkerShared(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
+  SWIGV8_Proxy *proxy = data.GetParameter();
+  
+  if(proxy->swigCMemOwn && proxy->swigCObject) {
+    VideoDecoderWorkerShared * arg1 = (VideoDecoderWorkerShared *)proxy->swigCObject;
     delete arg1;
   }
   delete proxy;
@@ -5628,6 +5664,9 @@ static void *_p_VideoEncoderFacadeTo_p_RTPReceiver(void *x, int *SWIGUNUSEDPARM(
 static void *_p_MediaFrameListenerBridgeTo_p_MediaFrameListener(void *x, int *SWIGUNUSEDPARM(newmemory)) {
     return (void *)((MediaFrameListener *)  ((MediaFrameListenerBridge *) x));
 }
+static void *_p_VideoDecoderWorkerTo_p_MediaFrameListener(void *x, int *SWIGUNUSEDPARM(newmemory)) {
+    return (void *)((MediaFrameListener *)  ((VideoDecoderWorker *) x));
+}
 static void *_p_VideoPipeTo_p_VideoInput(void *x, int *SWIGUNUSEDPARM(newmemory)) {
     return (void *)((VideoInput *)  ((VideoPipe *) x));
 }
@@ -5655,7 +5694,8 @@ static swig_type_info _swigt__p_RTPReceiverShared = {"_p_RTPReceiverShared", "p_
 static swig_type_info _swigt__p_ThumbnailGeneratorTask = {"_p_ThumbnailGeneratorTask", "p_ThumbnailGeneratorTask|ThumbnailGeneratorTask *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_TimeService = {"_p_TimeService", "p_TimeService|TimeService *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoCodecsModule = {"_p_VideoCodecsModule", "p_VideoCodecsModule", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_VideoDecoderFacade = {"_p_VideoDecoderFacade", "p_VideoDecoderFacade|VideoDecoderFacade *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_VideoDecoderWorker = {"_p_VideoDecoderWorker", "VideoDecoderWorker *|p_VideoDecoderWorker", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_VideoDecoderWorkerShared = {"_p_VideoDecoderWorkerShared", "p_VideoDecoderWorkerShared|VideoDecoderWorkerShared *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoEncoderFacade = {"_p_VideoEncoderFacade", "p_VideoEncoderFacade|VideoEncoderFacade *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoInput = {"_p_VideoInput", "VideoInput *|p_VideoInput", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoOutput = {"_p_VideoOutput", "p_VideoOutput|VideoOutput *", 0, 0, (void*)0, 0};
@@ -5688,7 +5728,8 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_ThumbnailGeneratorTask,
   &_swigt__p_TimeService,
   &_swigt__p_VideoCodecsModule,
-  &_swigt__p_VideoDecoderFacade,
+  &_swigt__p_VideoDecoderWorker,
+  &_swigt__p_VideoDecoderWorkerShared,
   &_swigt__p_VideoEncoderFacade,
   &_swigt__p_VideoInput,
   &_swigt__p_VideoOutput,
@@ -5707,7 +5748,7 @@ static swig_type_info *swig_type_initial[] = {
 };
 
 static swig_cast_info _swigc__p_EventLoop[] = {  {&_swigt__p_EventLoop, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_MediaFrameListener[] = {  {&_swigt__p_MediaFrameListener, 0, 0, 0},  {&_swigt__p_MediaFrameListenerBridge, _p_MediaFrameListenerBridgeTo_p_MediaFrameListener, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_MediaFrameListener[] = {  {&_swigt__p_MediaFrameListener, 0, 0, 0},  {&_swigt__p_MediaFrameListenerBridge, _p_MediaFrameListenerBridgeTo_p_MediaFrameListener, 0, 0},  {&_swigt__p_VideoDecoderWorker, _p_VideoDecoderWorkerTo_p_MediaFrameListener, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_MediaFrameListenerBridge[] = {  {&_swigt__p_MediaFrameListenerBridge, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_MediaFrameListenerBridgeShared[] = {  {&_swigt__p_MediaFrameListenerBridgeShared, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_MediaFrameListenerShared[] = {  {&_swigt__p_MediaFrameListenerShared, 0, 0, 0},{0, 0, 0, 0}};
@@ -5721,7 +5762,8 @@ static swig_cast_info _swigc__p_RTPReceiverShared[] = {  {&_swigt__p_RTPReceiver
 static swig_cast_info _swigc__p_ThumbnailGeneratorTask[] = {  {&_swigt__p_ThumbnailGeneratorTask, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_TimeService[] = {  {&_swigt__p_EventLoop, _p_EventLoopTo_p_TimeService, 0, 0},  {&_swigt__p_TimeService, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoCodecsModule[] = {  {&_swigt__p_VideoCodecsModule, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_VideoDecoderFacade[] = {  {&_swigt__p_VideoDecoderFacade, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_VideoDecoderWorker[] = {  {&_swigt__p_VideoDecoderWorker, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_VideoDecoderWorkerShared[] = {  {&_swigt__p_VideoDecoderWorkerShared, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoEncoderFacade[] = {  {&_swigt__p_VideoEncoderFacade, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoInput[] = {  {&_swigt__p_VideoInput, 0, 0, 0},  {&_swigt__p_VideoPipe, _p_VideoPipeTo_p_VideoInput, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoOutput[] = {  {&_swigt__p_VideoOutput, 0, 0, 0},  {&_swigt__p_VideoPipe, _p_VideoPipeTo_p_VideoOutput, 0, 0},{0, 0, 0, 0}};
@@ -5754,7 +5796,8 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_ThumbnailGeneratorTask,
   _swigc__p_TimeService,
   _swigc__p_VideoCodecsModule,
-  _swigc__p_VideoDecoderFacade,
+  _swigc__p_VideoDecoderWorker,
+  _swigc__p_VideoDecoderWorkerShared,
   _swigc__p_VideoEncoderFacade,
   _swigc__p_VideoInput,
   _swigc__p_VideoOutput,
@@ -6209,12 +6252,19 @@ _exports_VideoEncoderFacade_clientData.dtor = _wrap_delete_VideoEncoderFacade;
 if (SWIGTYPE_p_VideoEncoderFacade->clientdata == 0) {
   SWIGTYPE_p_VideoEncoderFacade->clientdata = &_exports_VideoEncoderFacade_clientData;
 }
-/* Name: _exports_VideoDecoderFacade, Type: p_VideoDecoderFacade, Dtor: _wrap_delete_VideoDecoderFacade */
-SWIGV8_FUNCTION_TEMPLATE _exports_VideoDecoderFacade_class = SWIGV8_CreateClassTemplate("_exports_VideoDecoderFacade");
-SWIGV8_SET_CLASS_TEMPL(_exports_VideoDecoderFacade_clientData.class_templ, _exports_VideoDecoderFacade_class);
-_exports_VideoDecoderFacade_clientData.dtor = _wrap_delete_VideoDecoderFacade;
-if (SWIGTYPE_p_VideoDecoderFacade->clientdata == 0) {
-  SWIGTYPE_p_VideoDecoderFacade->clientdata = &_exports_VideoDecoderFacade_clientData;
+/* Name: _exports_VideoDecoderWorker, Type: p_VideoDecoderWorker, Dtor: _wrap_delete_VideoDecoderWorker */
+SWIGV8_FUNCTION_TEMPLATE _exports_VideoDecoderWorker_class = SWIGV8_CreateClassTemplate("_exports_VideoDecoderWorker");
+SWIGV8_SET_CLASS_TEMPL(_exports_VideoDecoderWorker_clientData.class_templ, _exports_VideoDecoderWorker_class);
+_exports_VideoDecoderWorker_clientData.dtor = _wrap_delete_VideoDecoderWorker;
+if (SWIGTYPE_p_VideoDecoderWorker->clientdata == 0) {
+  SWIGTYPE_p_VideoDecoderWorker->clientdata = &_exports_VideoDecoderWorker_clientData;
+}
+/* Name: _exports_VideoDecoderWorkerShared, Type: p_VideoDecoderWorkerShared, Dtor: _wrap_delete_VideoDecoderWorkerShared */
+SWIGV8_FUNCTION_TEMPLATE _exports_VideoDecoderWorkerShared_class = SWIGV8_CreateClassTemplate("_exports_VideoDecoderWorkerShared");
+SWIGV8_SET_CLASS_TEMPL(_exports_VideoDecoderWorkerShared_clientData.class_templ, _exports_VideoDecoderWorkerShared_class);
+_exports_VideoDecoderWorkerShared_clientData.dtor = _wrap_delete_VideoDecoderWorkerShared;
+if (SWIGTYPE_p_VideoDecoderWorkerShared->clientdata == 0) {
+  SWIGTYPE_p_VideoDecoderWorkerShared->clientdata = &_exports_VideoDecoderWorkerShared_clientData;
 }
 /* Name: _exports_ThumbnailGeneratorTask, Type: p_ThumbnailGeneratorTask, Dtor: _wrap_delete_ThumbnailGeneratorTask */
 SWIGV8_FUNCTION_TEMPLATE _exports_ThumbnailGeneratorTask_class = SWIGV8_CreateClassTemplate("_exports_ThumbnailGeneratorTask");
@@ -6283,11 +6333,12 @@ SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "Stop", _wrap_VideoE
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "End", _wrap_VideoEncoderFacade_End);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "IsEncoding", _wrap_VideoEncoderFacade_IsEncoding);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "GetTimeService", _wrap_VideoEncoderFacade_GetTimeService);
-SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "Start", _wrap_VideoDecoderFacade_Start);
-SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "AddVideoOutput", _wrap_VideoDecoderFacade_AddVideoOutput);
-SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "RemoveVideoOutput", _wrap_VideoDecoderFacade_RemoveVideoOutput);
-SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "SetIncoming", _wrap_VideoDecoderFacade_SetIncoming);
-SWIGV8_AddMemberFunction(_exports_VideoDecoderFacade_class, "Stop", _wrap_VideoDecoderFacade_Stop);
+SWIGV8_AddMemberFunction(_exports_VideoDecoderWorker_class, "Start", _wrap_VideoDecoderWorker_Start);
+SWIGV8_AddMemberFunction(_exports_VideoDecoderWorker_class, "AddVideoOutput", _wrap_VideoDecoderWorker_AddVideoOutput);
+SWIGV8_AddMemberFunction(_exports_VideoDecoderWorker_class, "RemoveVideoOutput", _wrap_VideoDecoderWorker_RemoveVideoOutput);
+SWIGV8_AddMemberFunction(_exports_VideoDecoderWorker_class, "Stop", _wrap_VideoDecoderWorker_Stop);
+SWIGV8_AddMemberFunction(_exports_VideoDecoderWorkerShared_class, "toMediaFrameListener", _wrap_VideoDecoderWorkerShared_toMediaFrameListener);
+SWIGV8_AddMemberFunction(_exports_VideoDecoderWorkerShared_class, "get", _wrap_VideoDecoderWorkerShared_get);
 SWIGV8_AddMemberFunction(_exports_ThumbnailGeneratorTask_class, "Run", _wrap_ThumbnailGeneratorTask_Run);
 
 
@@ -6354,6 +6405,22 @@ if (SWIGTYPE_p_RTPReceiver->clientdata && !(static_cast<SWIGV8_ClientData *>(SWI
 } else {
 #ifdef SWIGRUNTIME_DEBUG
   printf("Unable to inherit baseclass, it didn't exist _exports_VideoEncoderFacade _RTPReceiver\n");
+#endif
+}
+if (SWIGTYPE_p_MediaFrameListener->clientdata && !(static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_MediaFrameListener->clientdata)->class_templ.IsEmpty()))
+{
+  _exports_VideoDecoderWorker_class->Inherit(
+    v8::Local<v8::FunctionTemplate>::New(
+      v8::Isolate::GetCurrent(),
+      static_cast<SWIGV8_ClientData *>(SWIGTYPE_p_MediaFrameListener->clientdata)->class_templ)
+    );
+  
+#ifdef SWIGRUNTIME_DEBUG
+  printf("Inheritance successful _exports_VideoDecoderWorker _MediaFrameListener\n");
+#endif
+} else {
+#ifdef SWIGRUNTIME_DEBUG
+  printf("Unable to inherit baseclass, it didn't exist _exports_VideoDecoderWorker _MediaFrameListener\n");
 #endif
 }
 
@@ -6539,15 +6606,25 @@ v8::Local<v8::Object> _exports_VideoEncoderFacade_obj = _exports_VideoEncoderFac
 #else
 v8::Local<v8::Object> _exports_VideoEncoderFacade_obj = _exports_VideoEncoderFacade_class_0->GetFunction(context).ToLocalChecked();
 #endif
-/* Class: VideoDecoderFacade (_exports_VideoDecoderFacade) */
-SWIGV8_FUNCTION_TEMPLATE _exports_VideoDecoderFacade_class_0 = SWIGV8_CreateClassTemplate("VideoDecoderFacade");
-_exports_VideoDecoderFacade_class_0->SetCallHandler(_wrap_new_VideoDecoderFacade);
-_exports_VideoDecoderFacade_class_0->Inherit(_exports_VideoDecoderFacade_class);
+/* Class: VideoDecoderWorker (_exports_VideoDecoderWorker) */
+SWIGV8_FUNCTION_TEMPLATE _exports_VideoDecoderWorker_class_0 = SWIGV8_CreateClassTemplate("VideoDecoderWorker");
+_exports_VideoDecoderWorker_class_0->SetCallHandler(_wrap_new_VideoDecoderWorker);
+_exports_VideoDecoderWorker_class_0->Inherit(_exports_VideoDecoderWorker_class);
 #if (SWIG_V8_VERSION < 0x0704)
-_exports_VideoDecoderFacade_class_0->SetHiddenPrototype(true);
-v8::Local<v8::Object> _exports_VideoDecoderFacade_obj = _exports_VideoDecoderFacade_class_0->GetFunction();
+_exports_VideoDecoderWorker_class_0->SetHiddenPrototype(true);
+v8::Local<v8::Object> _exports_VideoDecoderWorker_obj = _exports_VideoDecoderWorker_class_0->GetFunction();
 #else
-v8::Local<v8::Object> _exports_VideoDecoderFacade_obj = _exports_VideoDecoderFacade_class_0->GetFunction(context).ToLocalChecked();
+v8::Local<v8::Object> _exports_VideoDecoderWorker_obj = _exports_VideoDecoderWorker_class_0->GetFunction(context).ToLocalChecked();
+#endif
+/* Class: VideoDecoderWorkerShared (_exports_VideoDecoderWorkerShared) */
+SWIGV8_FUNCTION_TEMPLATE _exports_VideoDecoderWorkerShared_class_0 = SWIGV8_CreateClassTemplate("VideoDecoderWorkerShared");
+_exports_VideoDecoderWorkerShared_class_0->SetCallHandler(_wrap_new_VideoDecoderWorkerShared);
+_exports_VideoDecoderWorkerShared_class_0->Inherit(_exports_VideoDecoderWorkerShared_class);
+#if (SWIG_V8_VERSION < 0x0704)
+_exports_VideoDecoderWorkerShared_class_0->SetHiddenPrototype(true);
+v8::Local<v8::Object> _exports_VideoDecoderWorkerShared_obj = _exports_VideoDecoderWorkerShared_class_0->GetFunction();
+#else
+v8::Local<v8::Object> _exports_VideoDecoderWorkerShared_obj = _exports_VideoDecoderWorkerShared_class_0->GetFunction(context).ToLocalChecked();
 #endif
 /* Class: ThumbnailGeneratorTask (_exports_ThumbnailGeneratorTask) */
 SWIGV8_FUNCTION_TEMPLATE _exports_ThumbnailGeneratorTask_class_0 = SWIGV8_CreateClassTemplate("ThumbnailGeneratorTask");
@@ -6588,7 +6665,8 @@ SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoInput"), _e
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoOutput"), _exports_VideoOutput_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoPipe"), _exports_VideoPipe_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoEncoderFacade"), _exports_VideoEncoderFacade_obj));
-SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoDecoderFacade"), _exports_VideoDecoderFacade_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoDecoderWorker"), _exports_VideoDecoderWorker_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoDecoderWorkerShared"), _exports_VideoDecoderWorkerShared_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("ThumbnailGeneratorTask"), _exports_ThumbnailGeneratorTask_obj));
 
 
