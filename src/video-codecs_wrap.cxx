@@ -2223,9 +2223,12 @@ public:
 					//Call method
 					MakeCallback(cloned,"reject",i,argv);
 				});
-	
+
+			//Get frame
+			auto videoBuffer = decoder->GetFrame();
+
 			//Check decoded frame
-			if (!decoder->GetWidth() || !decoder->GetHeight() || !decoder->GetFrame())
+			if (!videoBuffer)
 				return VideoCodecsModule::Async([=,cloned2=cloned](){
 					Nan::HandleScope scope;
 					int i = 0;
@@ -2236,7 +2239,7 @@ public:
 				});
 
 			//Set decoded size 
-			if (!encoder->SetSize(decoder->GetWidth(),decoder->GetHeight()))
+			if (!encoder->SetSize(videoBuffer->GetWidth(),videoBuffer->GetHeight()))
 				return VideoCodecsModule::Async([=,cloned2=cloned](){
 					Nan::HandleScope scope;
 					int i = 0;
@@ -2247,7 +2250,7 @@ public:
 				});
 
 			//Encoder jpeb
-			auto frame = encoder->EncodeFrame(decoder->GetFrame());
+			auto frame = encoder->EncodeFrame(videoBuffer);
 
 			//Check
 			if (!frame)
