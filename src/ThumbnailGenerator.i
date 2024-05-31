@@ -34,6 +34,8 @@ public:
 		const uint8_t* data = (const uint8_t*)uint8array->Buffer()->GetBackingStore()->Data() + uint8array->ByteOffset();
 		const uint32_t size = uint8array->ByteLength();
 
+		
+
 		//Get codec for 
 		VideoCodec::Type codec = VideoCodec::GetCodecForName(decoderName);
 
@@ -49,7 +51,7 @@ public:
 			});
 
 		//Generate thumbanail in a different thread
-		auto thread = new std::thread([=,cloned=persistent](){
+		auto thread = new std::thread([=, videoFrame = std::make_shared<VideoFrame>(codec, std::make_shared<Buffer>(data,size)), cloned=persistent](){
 			//Create encoder
 			Properties properties;
 			std::unique_ptr<VideoEncoder> encoder(VideoCodecFactory::CreateEncoder(encoderCodec,properties));
@@ -81,9 +83,9 @@ public:
 					//Call method
 					MakeCallback(cloned,"reject",i,argv);
 				});
-				
+
 			//Decode frame
-			if(!decoder->Decode(data, size))
+			if(!decoder->Decode(videoFrame))
 				return VideoCodecsModule::Async([=,cloned=cloned](){
 					Nan::HandleScope scope;
 					int i = 0;
@@ -92,9 +94,12 @@ public:
 					//Call method
 					MakeCallback(cloned,"reject",i,argv);
 				});
-	
+
+			//Get frame
+			auto videoBuffer = decoder->GetFrame();
+
 			//Check decoded frame
-			if (!decoder->GetWidth() || !decoder->GetHeight() || !decoder->GetFrame())
+			if (!videoBuffer)
 				return VideoCodecsModule::Async([=,cloned2=cloned](){
 					Nan::HandleScope scope;
 					int i = 0;
@@ -105,7 +110,7 @@ public:
 				});
 
 			//Set decoded size 
-			if (!encoder->SetSize(decoder->GetWidth(),decoder->GetHeight()))
+			if (!encoder->SetSize(videoBuffer->GetWidth(),videoBuffer->GetHeight()))
 				return VideoCodecsModule::Async([=,cloned2=cloned](){
 					Nan::HandleScope scope;
 					int i = 0;
@@ -116,7 +121,7 @@ public:
 				});
 
 			//Encoder jpeb
-			auto frame = encoder->EncodeFrame(decoder->GetFrame());
+			auto frame = encoder->EncodeFrame(videoBuffer);
 
 			//Check
 			if (!frame)
