@@ -1,6 +1,6 @@
 {
   "name": "medooze-video-codecs",
-  "version": "1.19.25",
+  "version": "1.20.0",
   "description": "Video codecs for Media and RTMP servers",
   "main": "index.js",
   "scripts": {
@@ -27,11 +27,10 @@
     "tap": "^16.3.2",
     "uuid": "^3.3.2"
   },
+  "peerDependencies": {
+    "medooze-media-server-src": "^1.0.0"
+  },
   "files": [
-    "media-server/src/*",
-    "media-server/include/*",
-    "media-server/ext/libdatachannels/src/*",
-    "media-server/ext/crc32c/*",
     "lib/*",
     "package.json",
     "index.js",
