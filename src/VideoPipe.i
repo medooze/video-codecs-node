@@ -10,6 +10,7 @@ struct VideoPipe :
 {
 	int Init(float scaleResolutionDownBy, uint32_t scaleResolutionToHeigth, VideoPipeAllowedDownScaling allowedDownscaling);
 	int End();
+	void SetMaxDelay(uint32_t maxDelay);
 };
 
 
