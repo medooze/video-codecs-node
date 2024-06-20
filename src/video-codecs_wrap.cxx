@@ -4963,6 +4963,42 @@ fail:
 }
 
 
+static SwigV8ReturnValue _wrap_VideoPipe_SetMaxDelay(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoPipe *arg1 = (VideoPipe *) 0 ;
+  uint32_t arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  
+  if(args.Length() != 1) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoPipe_SetMaxDelay.");
+  
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoPipe, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoPipe_SetMaxDelay" "', argument " "1"" of type '" "VideoPipe *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoPipe * >(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(args[0], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VideoPipe_SetMaxDelay" "', argument " "2"" of type '" "uint32_t""'");
+  } 
+  arg2 = static_cast< uint32_t >(val2);
+  (arg1)->SetMaxDelay(arg2);
+  jsresult = SWIGV8_UNDEFINED();
+  
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
 static SwigV8ReturnValue _wrap_new_VideoPipe(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
@@ -6360,6 +6396,7 @@ SWIGV8_AddMemberFunction(_exports_Properties_class, "SetBooleanProperty", _wrap_
 SWIGV8_AddMemberFunction(_exports_Properties_class, "SetFloatProperty", _wrap_Properties_SetFloatProperty);
 SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "Init", _wrap_VideoPipe_Init);
 SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "End", _wrap_VideoPipe_End);
+SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "SetMaxDelay", _wrap_VideoPipe_SetMaxDelay);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "Init", _wrap_VideoEncoderFacade_Init);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "AddListener", _wrap_VideoEncoderFacade_AddListener);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "RemoveListener", _wrap_VideoEncoderFacade_RemoveListener);
