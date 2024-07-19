@@ -16,7 +16,12 @@ jobs:
     - name: Initialize submodules
       run: git submodule update --init --recursive
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install --fix-missing -y libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswscale-dev libvpx-dev libx264-dev
+      run: |
+        sudo apt-get update 
+        sudo apt-get install --fix-missing -y libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libswscale-dev libvpx-dev libx264-dev
+        sudo wget https://ftp.debian.org/debian/pool/main/a/aom/libaom3_3.9.1-1_amd64.deb
+        sudo wget https://ftp.debian.org/debian/pool/main/a/aom/libaom-dev_3.9.1-1_amd64.deb
+        sudo dpkg -i libaom3_3.9.1-1_amd64.deb libaom-dev_3.9.1-1_amd64.deb
     - name: Install and build
       run: npm i
     - name: Run Test
