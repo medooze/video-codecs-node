@@ -104,6 +104,7 @@
 							"<(medooze_media_server_src)/src/vp8/VP8LayerSelector.cpp",
 							"<(medooze_media_server_src)/src/vp9/VP9LayerSelector.cpp",	
 							"<(medooze_media_server_src)/src/jpeg/JPEGEncoder.cpp",
+							"<(medooze_media_server_src)/src/av1/AV1Decoder.cpp",
 							"<(medooze_media_server_src)/src/av1/AV1Encoder.cpp",
 							"<(medooze_media_server_src)/src/av1/AV1CodecConfigurationRecord.cpp",
 							"<(medooze_media_server_src)/src/av1/AV1LayerSelector.cpp",
