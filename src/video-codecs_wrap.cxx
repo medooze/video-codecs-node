@@ -1358,22 +1358,23 @@ fail: ;
 #define SWIGTYPE_p_VideoDecoderWorker swig_types[17]
 #define SWIGTYPE_p_VideoDecoderWorkerShared swig_types[18]
 #define SWIGTYPE_p_VideoEncoderFacade swig_types[19]
-#define SWIGTYPE_p_VideoInput swig_types[20]
-#define SWIGTYPE_p_VideoOutput swig_types[21]
-#define SWIGTYPE_p_VideoPipe swig_types[22]
-#define SWIGTYPE_p_char swig_types[23]
-#define SWIGTYPE_p_int swig_types[24]
-#define SWIGTYPE_p_long_long swig_types[25]
-#define SWIGTYPE_p_short swig_types[26]
-#define SWIGTYPE_p_signed_char swig_types[27]
-#define SWIGTYPE_p_unsigned_char swig_types[28]
-#define SWIGTYPE_p_unsigned_int swig_types[29]
-#define SWIGTYPE_p_unsigned_long_long swig_types[30]
-#define SWIGTYPE_p_unsigned_short swig_types[31]
-#define SWIGTYPE_p_v8__LocalT_v8__Object_t swig_types[32]
-#define SWIGTYPE_p_v8__LocalT_v8__Value_t swig_types[33]
-static swig_type_info *swig_types[35];
-static swig_module_info swig_module = {swig_types, 34, 0, 0, 0, 0};
+#define SWIGTYPE_p_VideoEncoderStats swig_types[20]
+#define SWIGTYPE_p_VideoInput swig_types[21]
+#define SWIGTYPE_p_VideoOutput swig_types[22]
+#define SWIGTYPE_p_VideoPipe swig_types[23]
+#define SWIGTYPE_p_char swig_types[24]
+#define SWIGTYPE_p_int swig_types[25]
+#define SWIGTYPE_p_long_long swig_types[26]
+#define SWIGTYPE_p_short swig_types[27]
+#define SWIGTYPE_p_signed_char swig_types[28]
+#define SWIGTYPE_p_unsigned_char swig_types[29]
+#define SWIGTYPE_p_unsigned_int swig_types[30]
+#define SWIGTYPE_p_unsigned_long_long swig_types[31]
+#define SWIGTYPE_p_unsigned_short swig_types[32]
+#define SWIGTYPE_p_v8__LocalT_v8__Object_t swig_types[33]
+#define SWIGTYPE_p_v8__LocalT_v8__Value_t swig_types[34]
+static swig_type_info *swig_types[36];
+static swig_module_info swig_module = {swig_types, 35, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2107,6 +2108,7 @@ moodycamel::ConcurrentQueue<std::function<void()>>  VideoCodecsModule::queue;
 using VideoPipeAllowedDownScaling = VideoPipe::AllowedDownScaling;
 
 
+using VideoEncoderStats = VideoEncoderWorker::Stats;
 
 class VideoEncoderFacade : 
 	public VideoEncoderWorker,
@@ -2351,6 +2353,7 @@ SWIGV8_ClientData _exports_VideoCodecsModule_clientData;
 SWIGV8_ClientData _exports_VideoInput_clientData;
 SWIGV8_ClientData _exports_VideoOutput_clientData;
 SWIGV8_ClientData _exports_VideoPipe_clientData;
+SWIGV8_ClientData _exports_VideoEncoderStats_clientData;
 SWIGV8_ClientData _exports_VideoEncoderFacade_clientData;
 SWIGV8_ClientData _exports_VideoDecoderWorker_clientData;
 SWIGV8_ClientData _exports_VideoDecoderWorkerShared_clientData;
@@ -5295,6 +5298,485 @@ static void _wrap_delete_VideoPipe(const v8::WeakCallbackInfo<SWIGV8_Proxy> &dat
 }
 
 
+static void _wrap_VideoEncoderStats_timestamp_set(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const SwigV8PropertyCallbackInfoVoid &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  uint64_t arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned long long val2 ;
+  int ecode2 = 0 ;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_timestamp_set" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long_SS_long(value, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VideoEncoderStats_timestamp_set" "', argument " "2"" of type '" "uint64_t""'");
+  } 
+  arg2 = static_cast< uint64_t >(val2);
+  if (arg1) (arg1)->timestamp = arg2;
+  
+  
+  
+  goto fail;
+fail:
+  return;
+}
+
+
+static SwigV8ReturnValue _wrap_VideoEncoderStats_timestamp_get(v8::Local<v8::Name> property, const SwigV8PropertyCallbackInfo &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  uint64_t result;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_timestamp_get" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  result = (uint64_t) ((arg1)->timestamp);
+  jsresult = SWIG_From_unsigned_SS_long_SS_long(static_cast< unsigned long long >(result));
+  
+  
+  SWIGV8_RETURN_INFO(jsresult, info);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN_INFO(SWIGV8_UNDEFINED(), info);
+}
+
+
+static void _wrap_VideoEncoderStats_totalEncodedFrames_set(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const SwigV8PropertyCallbackInfoVoid &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  uint64_t arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned long long val2 ;
+  int ecode2 = 0 ;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_totalEncodedFrames_set" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long_SS_long(value, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VideoEncoderStats_totalEncodedFrames_set" "', argument " "2"" of type '" "uint64_t""'");
+  } 
+  arg2 = static_cast< uint64_t >(val2);
+  if (arg1) (arg1)->totalEncodedFrames = arg2;
+  
+  
+  
+  goto fail;
+fail:
+  return;
+}
+
+
+static SwigV8ReturnValue _wrap_VideoEncoderStats_totalEncodedFrames_get(v8::Local<v8::Name> property, const SwigV8PropertyCallbackInfo &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  uint64_t result;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_totalEncodedFrames_get" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  result = (uint64_t) ((arg1)->totalEncodedFrames);
+  jsresult = SWIG_From_unsigned_SS_long_SS_long(static_cast< unsigned long long >(result));
+  
+  
+  SWIGV8_RETURN_INFO(jsresult, info);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN_INFO(SWIGV8_UNDEFINED(), info);
+}
+
+
+static void _wrap_VideoEncoderStats_fps_set(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const SwigV8PropertyCallbackInfoVoid &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  uint16_t arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned short val2 ;
+  int ecode2 = 0 ;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_fps_set" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_short(value, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VideoEncoderStats_fps_set" "', argument " "2"" of type '" "uint16_t""'");
+  } 
+  arg2 = static_cast< uint16_t >(val2);
+  if (arg1) (arg1)->fps = arg2;
+  
+  
+  
+  goto fail;
+fail:
+  return;
+}
+
+
+static SwigV8ReturnValue _wrap_VideoEncoderStats_fps_get(v8::Local<v8::Name> property, const SwigV8PropertyCallbackInfo &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  uint16_t result;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_fps_get" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  result = (uint16_t) ((arg1)->fps);
+  jsresult = SWIG_From_unsigned_SS_short(static_cast< unsigned short >(result));
+  
+  
+  SWIGV8_RETURN_INFO(jsresult, info);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN_INFO(SWIGV8_UNDEFINED(), info);
+}
+
+
+static void _wrap_VideoEncoderStats_bitrate_set(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const SwigV8PropertyCallbackInfoVoid &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  uint32_t arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int val2 ;
+  int ecode2 = 0 ;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_bitrate_set" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_int(value, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VideoEncoderStats_bitrate_set" "', argument " "2"" of type '" "uint32_t""'");
+  } 
+  arg2 = static_cast< uint32_t >(val2);
+  if (arg1) (arg1)->bitrate = arg2;
+  
+  
+  
+  goto fail;
+fail:
+  return;
+}
+
+
+static SwigV8ReturnValue _wrap_VideoEncoderStats_bitrate_get(v8::Local<v8::Name> property, const SwigV8PropertyCallbackInfo &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  uint32_t result;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_bitrate_get" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  result = (uint32_t) ((arg1)->bitrate);
+  jsresult = SWIG_From_unsigned_SS_int(static_cast< unsigned int >(result));
+  
+  
+  SWIGV8_RETURN_INFO(jsresult, info);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN_INFO(SWIGV8_UNDEFINED(), info);
+}
+
+
+static void _wrap_VideoEncoderStats_maxEncodingTime_set(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const SwigV8PropertyCallbackInfoVoid &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  uint16_t arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned short val2 ;
+  int ecode2 = 0 ;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_maxEncodingTime_set" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_short(value, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VideoEncoderStats_maxEncodingTime_set" "', argument " "2"" of type '" "uint16_t""'");
+  } 
+  arg2 = static_cast< uint16_t >(val2);
+  if (arg1) (arg1)->maxEncodingTime = arg2;
+  
+  
+  
+  goto fail;
+fail:
+  return;
+}
+
+
+static SwigV8ReturnValue _wrap_VideoEncoderStats_maxEncodingTime_get(v8::Local<v8::Name> property, const SwigV8PropertyCallbackInfo &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  uint16_t result;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_maxEncodingTime_get" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  result = (uint16_t) ((arg1)->maxEncodingTime);
+  jsresult = SWIG_From_unsigned_SS_short(static_cast< unsigned short >(result));
+  
+  
+  SWIGV8_RETURN_INFO(jsresult, info);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN_INFO(SWIGV8_UNDEFINED(), info);
+}
+
+
+static void _wrap_VideoEncoderStats_avgEncodingTime_set(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const SwigV8PropertyCallbackInfoVoid &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  uint16_t arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned short val2 ;
+  int ecode2 = 0 ;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_avgEncodingTime_set" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_short(value, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VideoEncoderStats_avgEncodingTime_set" "', argument " "2"" of type '" "uint16_t""'");
+  } 
+  arg2 = static_cast< uint16_t >(val2);
+  if (arg1) (arg1)->avgEncodingTime = arg2;
+  
+  
+  
+  goto fail;
+fail:
+  return;
+}
+
+
+static SwigV8ReturnValue _wrap_VideoEncoderStats_avgEncodingTime_get(v8::Local<v8::Name> property, const SwigV8PropertyCallbackInfo &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  uint16_t result;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_avgEncodingTime_get" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  result = (uint16_t) ((arg1)->avgEncodingTime);
+  jsresult = SWIG_From_unsigned_SS_short(static_cast< unsigned short >(result));
+  
+  
+  SWIGV8_RETURN_INFO(jsresult, info);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN_INFO(SWIGV8_UNDEFINED(), info);
+}
+
+
+static void _wrap_VideoEncoderStats_maxCaptureTime_set(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const SwigV8PropertyCallbackInfoVoid &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  uint16_t arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned short val2 ;
+  int ecode2 = 0 ;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_maxCaptureTime_set" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_short(value, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VideoEncoderStats_maxCaptureTime_set" "', argument " "2"" of type '" "uint16_t""'");
+  } 
+  arg2 = static_cast< uint16_t >(val2);
+  if (arg1) (arg1)->maxCaptureTime = arg2;
+  
+  
+  
+  goto fail;
+fail:
+  return;
+}
+
+
+static SwigV8ReturnValue _wrap_VideoEncoderStats_maxCaptureTime_get(v8::Local<v8::Name> property, const SwigV8PropertyCallbackInfo &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  uint16_t result;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_maxCaptureTime_get" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  result = (uint16_t) ((arg1)->maxCaptureTime);
+  jsresult = SWIG_From_unsigned_SS_short(static_cast< unsigned short >(result));
+  
+  
+  SWIGV8_RETURN_INFO(jsresult, info);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN_INFO(SWIGV8_UNDEFINED(), info);
+}
+
+
+static void _wrap_VideoEncoderStats_avgCaptureTime_set(v8::Local<v8::Name> property, v8::Local<v8::Value> value, const SwigV8PropertyCallbackInfoVoid &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  uint16_t arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned short val2 ;
+  int ecode2 = 0 ;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_avgCaptureTime_set" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  ecode2 = SWIG_AsVal_unsigned_SS_short(value, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "VideoEncoderStats_avgCaptureTime_set" "', argument " "2"" of type '" "uint16_t""'");
+  } 
+  arg2 = static_cast< uint16_t >(val2);
+  if (arg1) (arg1)->avgCaptureTime = arg2;
+  
+  
+  
+  goto fail;
+fail:
+  return;
+}
+
+
+static SwigV8ReturnValue _wrap_VideoEncoderStats_avgCaptureTime_get(v8::Local<v8::Name> property, const SwigV8PropertyCallbackInfo &info) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoEncoderStats *arg1 = (VideoEncoderStats *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  uint16_t result;
+  
+  res1 = SWIG_ConvertPtr(info.Holder(), &argp1,SWIGTYPE_p_VideoEncoderStats, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderStats_avgCaptureTime_get" "', argument " "1"" of type '" "VideoEncoderStats *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderStats * >(argp1);
+  result = (uint16_t) ((arg1)->avgCaptureTime);
+  jsresult = SWIG_From_unsigned_SS_short(static_cast< unsigned short >(result));
+  
+  
+  SWIGV8_RETURN_INFO(jsresult, info);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN_INFO(SWIGV8_UNDEFINED(), info);
+}
+
+
+static SwigV8ReturnValue _wrap_new_VideoEncoderStats(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_OBJECT self = args.Holder();
+  VideoEncoderStats *result;
+  if(self->InternalFieldCount() < 1) SWIG_exception_fail(SWIG_ERROR, "Illegal call of constructor _wrap_new_VideoEncoderStats.");
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_new_VideoEncoderStats.");
+  result = (VideoEncoderStats *)new VideoEncoderStats();
+  
+  
+  
+  SWIGV8_SetPrivateData(self, result, SWIGTYPE_p_VideoEncoderStats, SWIG_POINTER_OWN);
+  SWIGV8_RETURN(self);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static void _wrap_delete_VideoEncoderStats(const v8::WeakCallbackInfo<SWIGV8_Proxy> &data) {
+  SWIGV8_Proxy *proxy = data.GetParameter();
+  
+  if(proxy->swigCMemOwn && proxy->swigCObject) {
+    VideoEncoderStats * arg1 = (VideoEncoderStats *)proxy->swigCObject;
+    delete arg1;
+  }
+  delete proxy;
+}
+
+
 static SwigV8ReturnValue _wrap_new_VideoEncoderFacade(const SwigV8Arguments &args) {
   SWIGV8_HANDLESCOPE();
   
@@ -5606,6 +6088,34 @@ static SwigV8ReturnValue _wrap_VideoEncoderFacade_IsEncoding(const SwigV8Argumen
   arg1 = reinterpret_cast< VideoEncoderFacade * >(argp1);
   result = (int)(arg1)->IsEncoding();
   jsresult = SWIG_From_int(static_cast< int >(result));
+  
+  
+  SWIGV8_RETURN(jsresult);
+  
+  goto fail;
+fail:
+  SWIGV8_RETURN(SWIGV8_UNDEFINED());
+}
+
+
+static SwigV8ReturnValue _wrap_VideoEncoderFacade_GetStats(const SwigV8Arguments &args) {
+  SWIGV8_HANDLESCOPE();
+  
+  SWIGV8_VALUE jsresult;
+  VideoEncoderFacade *arg1 = (VideoEncoderFacade *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  VideoEncoderStats result;
+  
+  if(args.Length() != 0) SWIG_exception_fail(SWIG_ERROR, "Illegal number of arguments for _wrap_VideoEncoderFacade_GetStats.");
+  
+  res1 = SWIG_ConvertPtr(args.Holder(), &argp1,SWIGTYPE_p_VideoEncoderFacade, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "VideoEncoderFacade_GetStats" "', argument " "1"" of type '" "VideoEncoderFacade *""'"); 
+  }
+  arg1 = reinterpret_cast< VideoEncoderFacade * >(argp1);
+  result = (arg1)->GetStats();
+  jsresult = SWIG_NewPointerObj((new VideoEncoderStats(static_cast< const VideoEncoderStats& >(result))), SWIGTYPE_p_VideoEncoderStats, SWIG_POINTER_OWN |  0 );
   
   
   SWIGV8_RETURN(jsresult);
@@ -6036,6 +6546,7 @@ static swig_type_info _swigt__p_VideoCodecsModule = {"_p_VideoCodecsModule", "p_
 static swig_type_info _swigt__p_VideoDecoderWorker = {"_p_VideoDecoderWorker", "VideoDecoderWorker *|p_VideoDecoderWorker", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoDecoderWorkerShared = {"_p_VideoDecoderWorkerShared", "p_VideoDecoderWorkerShared|VideoDecoderWorkerShared *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoEncoderFacade = {"_p_VideoEncoderFacade", "p_VideoEncoderFacade|VideoEncoderFacade *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_VideoEncoderStats = {"_p_VideoEncoderStats", "p_VideoEncoderStats|VideoEncoderStats *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoInput = {"_p_VideoInput", "VideoInput *|p_VideoInput", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoOutput = {"_p_VideoOutput", "p_VideoOutput|VideoOutput *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_VideoPipe = {"_p_VideoPipe", "VideoPipe *|p_VideoPipe", 0, 0, (void*)0, 0};
@@ -6072,6 +6583,7 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_VideoDecoderWorker,
   &_swigt__p_VideoDecoderWorkerShared,
   &_swigt__p_VideoEncoderFacade,
+  &_swigt__p_VideoEncoderStats,
   &_swigt__p_VideoInput,
   &_swigt__p_VideoOutput,
   &_swigt__p_VideoPipe,
@@ -6108,6 +6620,7 @@ static swig_cast_info _swigc__p_VideoCodecsModule[] = {  {&_swigt__p_VideoCodecs
 static swig_cast_info _swigc__p_VideoDecoderWorker[] = {  {&_swigt__p_VideoDecoderWorker, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoDecoderWorkerShared[] = {  {&_swigt__p_VideoDecoderWorkerShared, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoEncoderFacade[] = {  {&_swigt__p_VideoEncoderFacade, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_VideoEncoderStats[] = {  {&_swigt__p_VideoEncoderStats, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoInput[] = {  {&_swigt__p_VideoInput, 0, 0, 0},  {&_swigt__p_VideoPipe, _p_VideoPipeTo_p_VideoInput, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoOutput[] = {  {&_swigt__p_VideoOutput, 0, 0, 0},  {&_swigt__p_VideoPipe, _p_VideoPipeTo_p_VideoOutput, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_VideoPipe[] = {  {&_swigt__p_VideoPipe, 0, 0, 0},{0, 0, 0, 0}};
@@ -6144,6 +6657,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_VideoDecoderWorker,
   _swigc__p_VideoDecoderWorkerShared,
   _swigc__p_VideoEncoderFacade,
+  _swigc__p_VideoEncoderStats,
   _swigc__p_VideoInput,
   _swigc__p_VideoOutput,
   _swigc__p_VideoPipe,
@@ -6604,6 +7118,13 @@ _exports_VideoPipe_clientData.dtor = _wrap_delete_VideoPipe;
 if (SWIGTYPE_p_VideoPipe->clientdata == 0) {
   SWIGTYPE_p_VideoPipe->clientdata = &_exports_VideoPipe_clientData;
 }
+/* Name: _exports_VideoEncoderStats, Type: p_VideoEncoderStats, Dtor: _wrap_delete_VideoEncoderStats */
+SWIGV8_FUNCTION_TEMPLATE _exports_VideoEncoderStats_class = SWIGV8_CreateClassTemplate("_exports_VideoEncoderStats");
+SWIGV8_SET_CLASS_TEMPL(_exports_VideoEncoderStats_clientData.class_templ, _exports_VideoEncoderStats_class);
+_exports_VideoEncoderStats_clientData.dtor = _wrap_delete_VideoEncoderStats;
+if (SWIGTYPE_p_VideoEncoderStats->clientdata == 0) {
+  SWIGTYPE_p_VideoEncoderStats->clientdata = &_exports_VideoEncoderStats_clientData;
+}
 /* Name: _exports_VideoEncoderFacade, Type: p_VideoEncoderFacade, Dtor: _wrap_delete_VideoEncoderFacade */
 SWIGV8_FUNCTION_TEMPLATE _exports_VideoEncoderFacade_class = SWIGV8_CreateClassTemplate("_exports_VideoEncoderFacade");
 SWIGV8_SET_CLASS_TEMPL(_exports_VideoEncoderFacade_clientData.class_templ, _exports_VideoEncoderFacade_class);
@@ -6687,6 +7208,14 @@ SWIGV8_AddMemberFunction(_exports_Properties_class, "SetFloatProperty", _wrap_Pr
 SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "Init", _wrap_VideoPipe_Init);
 SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "End", _wrap_VideoPipe_End);
 SWIGV8_AddMemberFunction(_exports_VideoPipe_class, "SetMaxDelay", _wrap_VideoPipe_SetMaxDelay);
+SWIGV8_AddMemberVariable(_exports_VideoEncoderStats_class, "timestamp", _wrap_VideoEncoderStats_timestamp_get, _wrap_VideoEncoderStats_timestamp_set);
+SWIGV8_AddMemberVariable(_exports_VideoEncoderStats_class, "totalEncodedFrames", _wrap_VideoEncoderStats_totalEncodedFrames_get, _wrap_VideoEncoderStats_totalEncodedFrames_set);
+SWIGV8_AddMemberVariable(_exports_VideoEncoderStats_class, "fps", _wrap_VideoEncoderStats_fps_get, _wrap_VideoEncoderStats_fps_set);
+SWIGV8_AddMemberVariable(_exports_VideoEncoderStats_class, "bitrate", _wrap_VideoEncoderStats_bitrate_get, _wrap_VideoEncoderStats_bitrate_set);
+SWIGV8_AddMemberVariable(_exports_VideoEncoderStats_class, "maxEncodingTime", _wrap_VideoEncoderStats_maxEncodingTime_get, _wrap_VideoEncoderStats_maxEncodingTime_set);
+SWIGV8_AddMemberVariable(_exports_VideoEncoderStats_class, "avgEncodingTime", _wrap_VideoEncoderStats_avgEncodingTime_get, _wrap_VideoEncoderStats_avgEncodingTime_set);
+SWIGV8_AddMemberVariable(_exports_VideoEncoderStats_class, "maxCaptureTime", _wrap_VideoEncoderStats_maxCaptureTime_get, _wrap_VideoEncoderStats_maxCaptureTime_set);
+SWIGV8_AddMemberVariable(_exports_VideoEncoderStats_class, "avgCaptureTime", _wrap_VideoEncoderStats_avgCaptureTime_get, _wrap_VideoEncoderStats_avgCaptureTime_set);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "Init", _wrap_VideoEncoderFacade_Init);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "AddListener", _wrap_VideoEncoderFacade_AddListener);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "RemoveListener", _wrap_VideoEncoderFacade_RemoveListener);
@@ -6695,6 +7224,7 @@ SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "Start", _wrap_Video
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "Stop", _wrap_VideoEncoderFacade_Stop);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "End", _wrap_VideoEncoderFacade_End);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "IsEncoding", _wrap_VideoEncoderFacade_IsEncoding);
+SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "GetStats", _wrap_VideoEncoderFacade_GetStats);
 SWIGV8_AddMemberFunction(_exports_VideoEncoderFacade_class, "GetTimeService", _wrap_VideoEncoderFacade_GetTimeService);
 SWIGV8_AddMemberFunction(_exports_VideoDecoderWorker_class, "Start", _wrap_VideoDecoderWorker_Start);
 SWIGV8_AddMemberFunction(_exports_VideoDecoderWorker_class, "AddVideoOutput", _wrap_VideoDecoderWorker_AddVideoOutput);
@@ -6979,6 +7509,16 @@ v8::Local<v8::Object> _exports_VideoPipe_obj = _exports_VideoPipe_class_0->GetFu
 #else
 v8::Local<v8::Object> _exports_VideoPipe_obj = _exports_VideoPipe_class_0->GetFunction(context).ToLocalChecked();
 #endif
+/* Class: VideoEncoderStats (_exports_VideoEncoderStats) */
+SWIGV8_FUNCTION_TEMPLATE _exports_VideoEncoderStats_class_0 = SWIGV8_CreateClassTemplate("VideoEncoderStats");
+_exports_VideoEncoderStats_class_0->SetCallHandler(_wrap_new_VideoEncoderStats);
+_exports_VideoEncoderStats_class_0->Inherit(_exports_VideoEncoderStats_class);
+#if (SWIG_V8_VERSION < 0x0704)
+_exports_VideoEncoderStats_class_0->SetHiddenPrototype(true);
+v8::Local<v8::Object> _exports_VideoEncoderStats_obj = _exports_VideoEncoderStats_class_0->GetFunction();
+#else
+v8::Local<v8::Object> _exports_VideoEncoderStats_obj = _exports_VideoEncoderStats_class_0->GetFunction(context).ToLocalChecked();
+#endif
 /* Class: VideoEncoderFacade (_exports_VideoEncoderFacade) */
 SWIGV8_FUNCTION_TEMPLATE _exports_VideoEncoderFacade_class_0 = SWIGV8_CreateClassTemplate("VideoEncoderFacade");
 _exports_VideoEncoderFacade_class_0->SetCallHandler(_wrap_new_VideoEncoderFacade);
@@ -7050,6 +7590,7 @@ SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoCodecsModul
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoInput"), _exports_VideoInput_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoOutput"), _exports_VideoOutput_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoPipe"), _exports_VideoPipe_obj));
+SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoEncoderStats"), _exports_VideoEncoderStats_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoEncoderFacade"), _exports_VideoEncoderFacade_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoDecoderWorker"), _exports_VideoDecoderWorker_obj));
 SWIGV8_MAYBE_CHECK(exports_obj->Set(context, SWIGV8_SYMBOL_NEW("VideoDecoderWorkerShared"), _exports_VideoDecoderWorkerShared_obj));
