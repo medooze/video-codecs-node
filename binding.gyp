@@ -4,13 +4,12 @@
 		'external_libmediaserver%'		: '<!(echo $LIBMEDIASERVER)',
 		'external_libmediaserver_include_dirs%'	: '<!(echo $LIBMEDIASERVER_INCLUDE)',
 		'medooze_media_server_src' : "<!(node -e \"require('medooze-media-server-src')\")",
-        
 	},
-	"targets": 
+	"targets":
 	[
 		{
 			"target_name": "medooze-video-codecs",
-			"cflags": 
+			"cflags":
 			[
 				"-march=native",
 				"-fexceptions",
@@ -20,7 +19,7 @@
 				#"-O0",
 				#"-fsanitize=address"
 			],
-			"cflags_cc": 
+			"cflags_cc":
 			[
 				"-fexceptions",
 				"-std=c++17",
@@ -31,24 +30,24 @@
 				#"-O0",
 				#"-fsanitize=address,leak"
 			],
-			"include_dirs" : 
+			"include_dirs" :
 			[
 				'/usr/include/nodejs/',
 				"<!(node -e \"require('nan')\")"
 			],
 			"ldflags" : [" -lpthread -lresolv"],
-			"link_settings": 
+			"link_settings":
 			{
-        			'libraries': ["-lpthread -lpthread -lresolv -lavcodec -lswscale -lavformat -lavutil -lvpx -lx264 -lavfilter"]
+        			'libraries': ["-lpthread -lpthread -lresolv -lavcodec -lswscale -lavformat -lavutil -lvpx -lx264 -lavfilter -laom"]
       			},
-			"sources": 
-			[ 
+			"sources":
+			[
 				"src/video-codecs_wrap.cxx",
 			],
 			"conditions":
 			[
 				[
-					"external_libmediaserver == ''", 
+					"external_libmediaserver == ''",
 					{
 						"include_dirs" :
 						[
@@ -63,8 +62,9 @@
 							"<(medooze_media_server_src)/src/vp9",
 							"<(medooze_media_server_src)/src/h264",
 							"<(medooze_media_server_src)/src/h265",
+							"/usr/local/src/aurora/include"
 						],
-						"sources": 
+						"sources":
 						[
 							"<(medooze_media_server_src)/src/VideoBufferScaler.cpp",
 							"<(medooze_media_server_src)/src/VideoCodecFactory.cpp",
@@ -104,8 +104,11 @@
 							"<(medooze_media_server_src)/src/vp8/VP8LayerSelector.cpp",
 							"<(medooze_media_server_src)/src/vp9/VP9LayerSelector.cpp",	
 							"<(medooze_media_server_src)/src/jpeg/JPEGEncoder.cpp",
-							"<(medooze_media_server_src)/src/webp/WEBPEncoder.cpp"
-
+							"<(medooze_media_server_src)/src/av1/AV1Decoder.cpp",
+							"<(medooze_media_server_src)/src/av1/AV1Encoder.cpp",
+							"<(medooze_media_server_src)/src/av1/AV1CodecConfigurationRecord.cpp",
+							"<(medooze_media_server_src)/src/av1/AV1LayerSelector.cpp",
+							"<(medooze_media_server_src)/src/av1/Obu.cpp",
 						],
   					        "conditions" : [
 								['OS=="mac"', {
@@ -139,4 +142,3 @@
 		}
 	]
 }
-
