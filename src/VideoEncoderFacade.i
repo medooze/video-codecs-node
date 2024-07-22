@@ -5,6 +5,7 @@
 %include "VideoInput.i"
 
 %{
+using VideoEncoderStats = VideoEncoderWorker::Stats;
 
 class VideoEncoderFacade : 
 	public VideoEncoderWorker,
@@ -42,6 +43,18 @@ private:
 };
 %}
 
+struct VideoEncoderStats
+{
+	uint64_t timestamp		= 0;
+	uint64_t totalEncodedFrames	= 0;
+	uint16_t fps			= 0;
+	uint32_t bitrate		= 0;
+	uint16_t maxEncodingTime	= 0;
+	uint16_t avgEncodingTime	= 0;
+	uint16_t maxCapturingTime	= 0;
+	uint16_t avgCapturingTime	= 0;
+};
+
 struct VideoEncoderFacade : public RTPReceiver
 {
 	VideoEncoderFacade();
@@ -54,5 +67,6 @@ struct VideoEncoderFacade : public RTPReceiver
 	int End();
 	int IsEncoding();
 
+	VideoEncoderStats GetStats();
 	TimeService& GetTimeService();
 };
