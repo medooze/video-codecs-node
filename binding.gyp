@@ -32,7 +32,6 @@
 			],
 			"include_dirs" :
 			[
-				'/usr/include/nodejs/',
 				"<!(node -e \"require('nan')\")"
 			],
 			"ldflags" : [" -lpthread -lresolv"],
