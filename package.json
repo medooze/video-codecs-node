@@ -4,11 +4,13 @@
   "description": "Video codecs for Media and RTMP servers",
   "main": "index.js",
   "scripts": {
+    "prepare": "tsc --checkJs false && mkdir -p build/src && cp src/*.d.ts build/src",
+    "check": "tsc --noEmit --emitDeclarationOnly false",
     "configure": "node-gyp configure",
     "swig": "swig -javascript -node -c++ -I`node -e \"require('medooze-media-server-src')\"`/include src/video-codecs.i",
     "build": "node-gyp build --jobs=max",
     "install": "test -f build/Release/medooze-video-codecs.node || (node-gyp configure && node-gyp rebuild --jobs=max)",
-    "dist": "node-gyp configure && node-gyp build --jobs=max && mkdir -p dist && tar cvzf dist/medooze-video-codecs-`node -e 'console.log(require(\"./package.json\").version)'`.tgz `([ \"$(uname)\" = 'Darwin' ] && echo \"-s |^|medooze-video-codecs/|\") || echo \" --transform=flags=r;s|^|medooze-video-codecs/|\"` package.json index.js   README.md lib/* build/Release/medooze-video-codecs.node",
+    "dist": "npm run configure && npm run build && npm run prepare && mkdir -p dist && tar cvzf dist/medooze-video-codecs-`node -e 'console.log(require(\"./package.json\").version)'`.tgz `([ \"$(uname)\" = 'Darwin' ] && echo \"-s |^|medooze-video-codecs/|\") || echo \" --transform=flags=r;s|^|medooze-video-codecs/|\"` package.json index.js index.d.ts build/types  README.md lib/* build/Release/medooze-video-codecs.node",
     "test": "tap tests/*.js --cov --no-check-coverage"
   },
   "repository": {
@@ -31,12 +33,18 @@
     "medooze-media-server-src": "^1.3.0"
   },
   "devDependencies": {
-    "tap": "^16.3.2"
+    "@types/lfsr": "^0.0.0",
+    "@types/node": "^20.8.6",
+    "@types/uuid": "^9.0.5",
+    "tap": "^16.3.2",
+    "typescript": "^5.2.2"
   },
   "files": [
     "lib/*",
     "package.json",
     "index.js",
+    "index.d.ts",
+    "build/types",
     "binding.gyp",
     "README.md",
     "src"
