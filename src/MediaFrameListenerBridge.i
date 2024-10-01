@@ -15,11 +15,6 @@ struct MediaFrameListenerBridge :
 	public MediaFrameListener,
 	public MediaFrameProducer
 {
-	// @todo Use nodefaultctor here and ALL other places I forgot about
-private:
-	MediaFrameListenerBridge();
-public:
-	//static shared_ptr<MediaFrameListenerBridge> Create(TimeService& timeService, int ssrc);
 
 	QWORD numFrames;
 	QWORD numPackets;
